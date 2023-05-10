@@ -41,7 +41,7 @@ class Client:
     def run_epoch(self, cur_epoch, optimizer):
         """
         This method locally trains the model with the dataset of the client. It handles the training at mini-batch level
-        :param cur_epoch: current epoch of training
+        :param cur_epoch: current epoch of training why is it instantiated??????? TO ASK
         :param optimizer: optimizer used for the local training
         """
         for cur_step, (images, labels) in enumerate(self.train_loader):

@@ -12,6 +12,7 @@ def _deeplabv3_mobilenetv2(
         num_classes: int,
 ) -> DeepLabV3:
     backbone = backbone.features
+#aggiunge un feature extracctor e classifier al modello creato da deeplabv3_mobilenetv2
 
     out_pos = len(backbone) - 1
     out_inplanes = backbone[out_pos][0].out_channels
@@ -28,6 +29,7 @@ def deeplabv3_mobilenetv2(
         in_channels: int = 3
 ) -> DeepLabV3:
     width_mult = 1
+#crea il conv_nn di base e importa il dizionario di un modello pretrained
     backbone = MobileNetV2(width_mult=width_mult, in_channels=in_channels)
     model_urls = {
         0.5: 'https://github.com/d-li14/mobilenetv2.pytorch/raw/master/pretrained/mobilenetv2_0.5-eaa6f9ad.pth',

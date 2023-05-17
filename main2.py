@@ -189,8 +189,8 @@ def main():
     train_clients, test_clients = gen_clients(args, train_datasets, test_datasets, model)
 
     client = Client(args, train_clients, model, test_clients)
-    client.train(model, train_clients)
-    client.test(model, test_clients, metrics)
+    client.train()
+    client.test()
 
 
 if __name__ == '__main__':

@@ -12,7 +12,8 @@ class Client:
     def __init__(self, args, dataset, model, test_client=False):
         self.args = args
         self.dataset = dataset
-        self.name = self.dataset.client_name
+        # da decommentare quando usi femnist
+        #self.name = self.dataset.client_name
         self.model = model
         self.train_loader = DataLoader(self.dataset, batch_size=self.args.bs, shuffle=True, drop_last=True) \
             if not test_client else None

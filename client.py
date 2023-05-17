@@ -7,7 +7,6 @@ from torch.utils.data import DataLoader
 
 from utils.utils import HardNegativeMining, MeanReduction
 
-
 class Client:
 
     def __init__(self, args, dataset, model, test_client=False):
@@ -38,35 +37,101 @@ class Client:
             return self.model(images)
         raise NotImplementedError
 
+"""
     def run_epoch(self, cur_epoch, optimizer):
-        """
-        This method locally trains the model with the dataset of the client. It handles the training at mini-batch level
-        :param cur_epoch: current epoch of training why is it instantiated??????? TO ASK
-        :param optimizer: optimizer used for the local training
-        """
+        
+        #This method locally trains the model with the dataset of the client. It handles the training at mini-batch level
+        #:param cur_epoch: current epoch of training
+        #:param optimizer: optimizer used for the local training
+        
         for cur_step, (images, labels) in enumerate(self.train_loader):
             # TODO: missing code here!
             raise NotImplementedError
 
     def train(self):
-        """
-        This method locally trains the model with the dataset of the client. It handles the training at epochs level
-        (by calling the run_epoch method for each local epoch of training)
-        :return: length of the local dataset, copy of the model parameters
-        """
+        
+        #This method locally trains the model with the dataset of the client. It handles the training at epochs level
+        #(by calling the run_epoch method for each local epoch of training)
+        #:return: length of the local dataset, copy of the model parameters
+        
         # TODO: missing code here!
         for epoch in range(self.args.num_epochs):
             # TODO: missing code here!
             raise NotImplementedError
 
     def test(self, metric):
-        """
-        This method tests the model on the local dataset of the client.
-        :param metric: StreamMetric object
-        """
+        
+        #This method tests the model on the local dataset of the client.
+        #: param metric: StreamMetric object
+        
         # TODO: missing code here!
         with torch.no_grad():
             for i, (images, labels) in enumerate(self.test_loader):
                 # TODO: missing code here!
                 raise NotImplementedError
                 self.update_metric(metric, outputs, labels)
+
+"""
+
+
+def run_epoch(self, cur_epoch, optimizer):
+    """
+    This method locally trains the model with the dataset of the client. It handles the training at mini-batch level
+    :param cur_epoch: current epoch of training
+    :param optimizer: optimizer used for the local training
+    """
+    self.model.train()
+    total_loss = 0
+    total_metric = defaultdict(float)
+
+    for cur_step, (images, labels) in enumerate(self.train_loader):
+        optimizer.zero_grad()
+        outputs = self._get_outputs(images)
+        loss = self.reduction(self.criterion, outputs, labels)
+        loss.backward()
+        optimizer.step()
+
+        total_loss += loss.item()
+        self.update_metric(total_metric, outputs, labels)
+
+    return len(self.train_loader), total_loss / len(self.train_loader), total_metric
+
+
+def train(self):
+    """
+    This method locally trains the model with the dataset of the client. It handles the training at epochs level
+    (by calling the run_epoch method for each local epoch of training)
+    :return: length of the local dataset, copy of the model parameters
+    """
+    n_samples = len(self.train_loader.dataset)
+    local_model = copy.deepcopy(self.model.state_dict())
+
+    optimizer = optim.SGD(local_model.parameters(), lr=self.args.lr, momentum=0.9)
+
+    for epoch in range(self.args.num_epochs):
+        _, loss, metric = self.run_epoch(epoch, optimizer)
+        print(f'Client {self.name}, Epoch [{epoch + 1}/{self.args.num_epochs}], Loss: {loss:.4f}')
+
+    return n_samples, local_model
+
+
+def test(self):
+    """
+    This method tests the model on the local dataset of the client.
+    :return: accuracy of the model on the local test set
+    """
+    self.model.eval()
+    correct = 0
+    total = 0
+
+    with torch.no_grad():
+        for i, (images, labels) in enumerate(self.test_loader):
+            outputs = self._get_outputs(images)
+            _, predicted = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+
+    accuracy = 100 * correct / total
+    return accuracy
+
+

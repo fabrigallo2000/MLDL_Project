@@ -5,4 +5,4 @@
 
 cose importanti: 
 - il numero di clients va deciso in un altro modo (vedere slack prima domanda per capire) questo per velocizzare il training
-- 
+- server è allenato solo su client o c'è anche un centralizzato? il dataset del centralizzato nel caso è Emnist

@@ -1,6 +1,5 @@
 import copy
 import torch
-
 from torch import optim, nn
 from collections import defaultdict
 from torch.utils.data import DataLoader
@@ -36,7 +35,7 @@ class Client:
             return self.model(images)['out']
         if self.args.model == 'resnet18':
             return self.model(images)
-        if self.args.model == 'cnn':
+        if self.args.model == 'cnn': #non va salvato un modello locale?
             return self.model(images)
         else:
             raise NotImplementedError
@@ -70,17 +69,16 @@ class Client:
         (by calling the run_epoch method for each local epoch of training)
         :return: length of the local dataset, copy of the model parameters
         """
-        n_samples = len(self.train_loader.dataset)
-        local_model = copy.deepcopy(self.model.state_dict())
+        #n_samples = len(self.train_loader.dataset) #esce spesso un errore, capire come risolvere nel caso
+        #local_model = copy.deepcopy(self.model) #state dict tira fuori il dizionario: non ha utilità ma salvare il locale si 
 
-        optimizer = optim.SGD(local_model.parameters(), lr=self.args.lr, momentum=0.9)
+        optimizer = optim.SGD(self.model.parameters(), lr=self.args.lr, momentum=0.9) #da vedere se salvare il locale
 
         for epoch in range(self.args.num_epochs):
             _, loss, metric = self.run_epoch(epoch, optimizer)
             print(f'Client {self.name}, Epoch [{epoch + 1}/{self.args.num_epochs}], Loss: {loss:.4f}')
 
-        return n_samples, local_model
-
+        return n_samples
 
     def test(self):
         """

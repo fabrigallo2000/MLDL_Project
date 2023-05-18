@@ -14,7 +14,8 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # use gpu
 
 # load data in
 train_set = datasets.EMNIST(root="data", split="balanced",
-                            train=True, transform=transforms.Compose([ToTensor()])
+                            train=True, transform=transforms.Compose([ToTensor()]),
+                           download=True
                            )
 test_set = datasets.EMNIST(root="data", split="balanced", 
                            train=False,transform=transforms.Compose([ToTensor()])
@@ -224,5 +225,4 @@ def main(args):
     return vars(args), results
 
 
-if __name__ == '__main__':
-    main()
+main()

@@ -13,12 +13,13 @@ from models.YourCNN import YourCNN
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # use gpu if available
 
 # load data in
-train_set = datasets.EMNIST(root="data", split="balanced",
+train_set = datasets.EMNIST(root="/content/MLDL_Project/data", split="balanced",
                             train=True, transform=transforms.Compose([ToTensor()]),
                            download=True
                            )
-test_set = datasets.EMNIST(root="data", split="balanced", 
+test_set = datasets.EMNIST(root="/content/MLDL_Project/data", split="balanced", 
                            train=False,transform=transforms.Compose([ToTensor()])
+                           download=True
                           )
 entire_trainset = torch.utils.data.DataLoader(train_set, shuffle=True)
 

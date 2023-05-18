@@ -4,7 +4,7 @@ import torch.nn as nn
 class YourCNN(nn.Module):
     def __init__(self, num_classes):
         super(YourCNN, self).__init__()
-        self.conv1 = nn.Conv2d(3, 32, kernel_size=5, stride=1, padding=2)
+        self.conv1 = nn.Conv2d(1, 32, kernel_size=5, stride=1, padding=2)
         self.relu = nn.ReLU()
         self.maxpool1 = nn.MaxPool2d(kernel_size=2, stride=2)
         self.conv2 = nn.Conv2d(32, 64, kernel_size=5, stride=1, padding=2)

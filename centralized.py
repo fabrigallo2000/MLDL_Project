@@ -152,21 +152,6 @@ def test(net, args):
 
     return test_acc
 def main(args):
-
-    parser = argparse.ArgumentParser()
-    args = parser.parse_args("")
-
-    #### Model Capacity ####
-    args.out_dim = 47
-
-    #### Regularization ####
-
-    #### Optimization ####
-    args.optim = 'sgd'
-    args.lr = 0.001  # learning rate
-    args.epoch = 10
-    args.train_batch = 256
-    args.test_batch = 256
     '''
     Execute train and validate functions epoch-times to train a CNN model.
     Each time, store train & validation loss and accuracy.
@@ -225,5 +210,18 @@ def main(args):
     
     return vars(args), results
 
+parser = argparse.ArgumentParser()
+args = parser.parse_args("")
 
-main()
+#### Model Capacity ####
+args.out_dim = 47
+
+#### Regularization ####
+
+#### Optimization ####
+args.optim = 'sgd'
+args.lr = 0.001  # learning rate
+args.epoch = 10
+args.train_batch = 256
+args.test_batch = 256
+main(args)

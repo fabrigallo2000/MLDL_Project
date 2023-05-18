@@ -215,7 +215,7 @@ parser = argparse.ArgumentParser()
 args = parser.parse_args("")
 
 #### Model Capacity ####
-args.out_dim = 47
+args.out_dim = 62
 
 #### Regularization ####
 

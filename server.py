@@ -108,7 +108,7 @@ class Server:
                 client_correct = 0
                 client_loss = 0.0
 
-                for _, (data, target) in enumerate(client.train_loader):
+                '''for _, (data, target) in enumerate(client.train_loader):
                     data, target = data.to(self.args.device), target.to(self.args.device)
                     output = self.model(data)
                     loss = torch.nn.functional.cross_entropy(output, target)
@@ -117,7 +117,21 @@ class Server:
 
                     client_loss += loss.item() * data.size(0)
                     client_correct += correct
-                    client_samples += data.size(0)
+                    client_samples += data.size(0)'''
+
+                for _, (data, target) in enumerate(client.train_loader):
+                    inputs = data
+                    labels = target
+                    inputs = inputs.cuda()
+                    labels = labels.cuda()
+                    outputs = self.model(inputs)
+
+                    loss = torch.nn.functional.cross_entropy(outputs, labels)
+                    
+                    client_loss += loss.item()
+                    _, prediction = torch.max(outputs.data, 1)
+                    client_samples += labels.size(0)
+                    client_correct += (prediction == labels).sum().item()
 
                 # Accumulate results for each client
                 total_loss += client_loss
@@ -149,20 +163,23 @@ def test(self):
             client_loss = 0.0
 
             for _, (data, target) in enumerate(client.test_loader):
-                data, target = data.to(self.args.device), target.to(self.args.device)
-                output = self.model(data)
-                loss = torch.nn.functional.cross_entropy(output, target)
-                predictions = output.argmax(dim=1)
-                correct = (predictions == target).sum().item()
+                inputs = data
+                labels = target
+                inputs = inputs.cuda()
+                labels = labels.cuda()
+                outputs = self.model(inputs)
 
-                client_loss += loss.item() * data.size(0)
-                client_correct += correct
-                client_samples += data.size(0)
-
-            # Accumulate results for each client
+                loss = torch.nn.functional.cross_entropy(outputs, labels)
+                
+                client_loss += loss.item()
+                _, prediction = torch.max(outputs.data, 1)
+                client_samples += labels.size(0)
+                client_correct += (prediction == labels).sum().item()
+            
             total_loss += client_loss
             total_correct += client_correct
             total_samples += client_samples
+            
 
     # Calculate average metrics across all clients
     avg_loss = total_loss / total_samples

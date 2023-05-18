@@ -207,6 +207,7 @@ def main(args):
     results['val_acc'] = round(val_acc, 2)
     results['test_acc'] = round(test_acc, 2)
     results['time_total'] = round(time_total, 2)
+    print(results['test_acc'])
     
     return vars(args), results
 

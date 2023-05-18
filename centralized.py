@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import argparse
 import time
 from collections import OrderedDict
-from models import YourCNN
+from models.YourCNN import YourCNN
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # use gpu if available
 
 # load data in

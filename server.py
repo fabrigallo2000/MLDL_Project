@@ -26,14 +26,12 @@ class Server:
         """
         updates = []
         for i, c in enumerate(clients):
-            client_model = copy.deepcopy(self.model)
-            client_optimizer = torch.optim.SGD(client_model.parameters(), lr=self.args.lr)
-
+           
             # Set the model in training mode
-            client_model.train()
+            c.train()
 
             # Train the client model using its dataset
-            for _ in range(self.args.local_epochs):
+            '''for _ in range(self.args.local_epochs):
                 for _, (data, target) in enumerate(c.train_loader):
                     data, target = data.to(self.args.device), target.to(self.args.device)
 
@@ -41,10 +39,10 @@ class Server:
                     output = client_model(data)
                     loss = torch.nn.functional.cross_entropy(output, target)
                     loss.backward()
-                    client_optimizer.step()
+                    client_optimizer.step()'''
 
             # Get the updated model's parameters
-            updated_params = client_model.state_dict()
+            updated_params = c.state_dict()
 
             # Compute the difference between the current and updated parameters
             updates.append(OrderedDict({key: updated_params[key] - self.model_params_dict[key] for key in updated_params}))

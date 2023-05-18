@@ -13,7 +13,7 @@ class Client:
         self.args = args
         self.dataset = dataset
         # da decommentare quando usi femnist
-        #self.name = self.dataset.client_name
+        self.name = self.dataset.client_name
         self.model = model
         self.train_loader = DataLoader(self.dataset, batch_size=self.args.bs, shuffle=True, drop_last=True) \
             if not test_client else None
@@ -36,7 +36,10 @@ class Client:
             return self.model(images)['out']
         if self.args.model == 'resnet18':
             return self.model(images)
-        raise NotImplementedError
+        if self.args.model == 'cnn':
+            return self.model(images)
+        else:
+            raise NotImplementedError
 
     def run_epoch(self, cur_epoch, optimizer):
         """

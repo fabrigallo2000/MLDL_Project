@@ -56,11 +56,16 @@ class Client:
             loss = self.reduction(self.criterion, outputs, labels)
             loss.backward()
             optimizer.step()
-
             total_loss += loss.item()
             self.update_metric(total_metric, outputs, labels)
+            _, prediction = torch.max(outputs.data, 1)  # grab prediction as one-dimensional tensor
+            total += labels.size(0)
+            correct += (prediction == labels).sum().item()
 
-        return len(self.train_loader), total_loss / len(self.train_loader), total_metric
+        train_loss = train_loss / len(self.train_loader)
+        train_acc = 100 * correct / total
+
+        return len(self.train_loader),train_loss,train_acc
 
 
     def train(self):
@@ -75,30 +80,26 @@ class Client:
         optimizer = optim.SGD(self.model.parameters(), lr=self.args.lr, momentum=0.9) #da vedere se salvare il locale
 
         for epoch in range(self.args.num_epochs):
-            _, loss, metric = self.run_epoch(epoch, optimizer)
-            print(f'Client {self.name}, Epoch [{epoch + 1}/{self.args.num_epochs}], Loss: {loss:.4f}')
+            _, loss,accuracy  = self.run_epoch(epoch, optimizer)
+            print(f'Client {self.name}, Epoch [{epoch + 1}/{self.args.num_epochs}], Loss: {loss:.4f}, Accuracy: {accuracy:.3f}')
 
         return n_samples
 
-    def test(self,optimizer): #ma quindi è utile?
-        """
-        This method tests the model on the local dataset of the client.
-        :return: accuracy of the model on the local test set
-        """
-        self.model.eval()
-        correct = 0
-        total = 0
+    import torch
 
-        with torch.no_grad():
-            for i, (images, labels) in enumerate(self.test_loader):
-                outputs = self._get_outputs(images)
-                _, predicted = torch.max(outputs.data, 1)
-                total += labels.size(0)
-                correct += (predicted == labels).sum().item()
-                loss = self.reduction(self.criterion, outputs, labels)
-                loss.backward()
-                optimizer.step()
-                total_loss += loss.item()
-
-        accuracy = 100 * correct / total
-        return accuracy
+def test(self, metric):
+    """
+    This method tests the model on the local dataset of the client.
+    :param metric: StreamMetric object
+    """
+    self.model.eval()  # Imposta il modello in modalità di valutazione (non addestramento)
+    with torch.no_grad():
+        for i, (images, labels) in enumerate(self.test_loader):
+            #images = images.to(self.device)
+            #labels = labels.to(self.device)
+            
+            outputs = self.model(images)  # Esegue l'inferenza sulle immagini
+            
+            self.update_metric(metric, outputs, labels)  # Aggiorna la metrica
+            
+   # self.model.train()  # Riporta il modello in modalità di addestramento

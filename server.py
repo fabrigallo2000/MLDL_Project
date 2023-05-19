@@ -145,7 +145,7 @@ class Server:
         return avg_loss, accuracy
 
 
-def test(self):
+'''def test(self):
     """
     This method handles the test on the test clients.
     """
@@ -185,4 +185,34 @@ def test(self):
     avg_loss = total_loss / total_samples
     accuracy = total_correct / total_samples
 
-    return avg_loss, accuracy
+    return avg_loss, accuracy'''
+'''import torch
+
+def test(self, metric):
+    """
+    This method tests the model on the local dataset of the client.
+    :param metric: StreamMetric object
+    """
+    self.model.eval()  # Imposta il modello in modalità di valutazione (non addestramento)
+    with torch.no_grad():
+        for i, (images, labels) in enumerate(self.test_loader):
+            #images = images.to(self.device)
+            #labels = labels.to(self.device)
+            
+            outputs = self.model(images)  # Esegue l'inferenza sulle immagini
+            self.update_metric(metric, outputs, labels)  # Aggiorna la metrica
+            
+    #self.model.train()  # Riporta il modello in modalità di addestramento'''
+
+def test(self):
+    """
+    This method handles the test on the test clients
+    """
+    for client in self.test_clients:
+        metric = self.metrics  
+        client.test(metric)  # Esegue il test utilizzando il metodo test del client
+
+        # Stampa i risultati della metrica per il client corrente
+        print(f"Testing  client {client.name}")
+    print(f"Accuracy: {metric.get_results()}")
+    

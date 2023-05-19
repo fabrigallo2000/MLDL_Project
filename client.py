@@ -13,7 +13,7 @@ class Client:
         self.dataset = dataset
         # da decommentare quando usi femnist
         self.name = self.dataset.client_name
-        self.model = model
+        self.model = copy.deepcopy(model) #se è test invece?
         self.train_loader = DataLoader(self.dataset, batch_size=self.args.bs, shuffle=True, drop_last=True) \
             if not test_client else None
         self.test_loader = DataLoader(self.dataset, batch_size=1, shuffle=False)
@@ -80,7 +80,7 @@ class Client:
 
         return n_samples
 
-    def test(self):
+    def test(self,optimizer): #ma quindi è utile?
         """
         This method tests the model on the local dataset of the client.
         :return: accuracy of the model on the local test set
@@ -95,6 +95,10 @@ class Client:
                 _, predicted = torch.max(outputs.data, 1)
                 total += labels.size(0)
                 correct += (predicted == labels).sum().item()
+                loss = self.reduction(self.criterion, outputs, labels)
+                loss.backward()
+                optimizer.step()
+                total_loss += loss.item()
 
         accuracy = 100 * correct / total
         return accuracy

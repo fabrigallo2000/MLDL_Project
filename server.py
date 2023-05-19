@@ -28,8 +28,9 @@ class Server:
         for i, c in enumerate(clients):
            
             # train the client
+            
+            c.model.load_state_dict(self.model_params_dict)
             c.train()
-
             # Train the client model using its dataset
             '''for _ in range(self.args.local_epochs):
                 for _, (data, target) in enumerate(c.train_loader):
@@ -101,6 +102,7 @@ class Server:
 
         with torch.no_grad():
             # Set the model in evaluation mode
+
             self.model.eval()
 
             for client in self.train_clients:
@@ -210,6 +212,7 @@ def test(self):
     """
     for client in self.test_clients:
         metric = self.metrics  
+        c.model.load_state_dict(self.model_params_dict)
         client.test(metric)  # Esegue il test utilizzando il metodo test del client
 
         # Stampa i risultati della metrica per il client corrente

@@ -20,12 +20,14 @@ class Femnist(Dataset):
                  client_name: str):
         super().__init__()
         self.samples = [(image, label) for image, label in zip(data['x'], data['y'])]
+        # self.samples è lista di tuple [([pixel immagine], label), ()]
         self.transform = transform
         self.client_name = client_name
 
     def __getitem__(self, index: int) -> Any:
-        # TODO: missing code here!
-        raise NotImplementedError
+        # chiamata da torch, torna immagine e label corrispondenti all'indice
+        image, label = self.samples[index]
+        return image, label
 
     def __len__(self) -> int:
         return len(self.samples)

@@ -34,6 +34,7 @@ class Client:
         if self.args.model == 'deeplabv3_mobilenetv2':
             return self.model(images)['out']
         if self.args.model == 'resnet18':
+            # errore credo sul type di images, da errore sul type di oggetto anche solo chiamando self.model(images)
             return self.model(images)
         if self.args.model == 'cnn': #non va salvato un modello locale?
             return self.model(images)

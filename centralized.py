@@ -18,7 +18,7 @@ train_set = datasets.EMNIST(root="/content/MLDL_Project/data", split="balanced",
                            download=True
                            )
 test_set = datasets.EMNIST(root="/content/MLDL_Project/data", split="balanced", 
-                           train=False,transform=transforms.Compose([ToTensor()])
+                           train=False,transform=transforms.Compose([ToTensor()]),
                            download=True
                           )
 entire_trainset = torch.utils.data.DataLoader(train_set, shuffle=True)

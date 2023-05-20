@@ -25,10 +25,11 @@ class Client:
 
     @staticmethod
     def update_metric(metric, outputs, labels):
-        _, prediction = outputs.max(dim=1)
+        _, predictions = outputs.max(dim=1)
         labels = labels.cpu().numpy()
-        prediction = prediction.cpu().numpy()
-        metric.update(labels, prediction)
+        predictions = predictions.cpu().numpy()
+        for key, value in zip(labels, predictions):
+            metric[key]=value
 
     def _get_outputs(self, images):
         if self.args.model == 'deeplabv3_mobilenetv2':
@@ -52,20 +53,23 @@ class Client:
         self.model.train()
         total_loss = 0
         total_metric = defaultdict(float)
+        total = 0
+        correct =0
 
         for cur_step, (images, labels) in enumerate(self.train_loader):
             optimizer.zero_grad()
             outputs = self._get_outputs(images)
-            loss = self.reduction(self.criterion, outputs, labels)
+            loss = self.reduction(outputs, labels)
             loss.backward()
             optimizer.step()
             total_loss += loss.item()
             self.update_metric(total_metric, outputs, labels)
             _, prediction = torch.max(outputs.data, 1)  # grab prediction as one-dimensional tensor
             total += labels.size(0)
+            labels = labels.cuda()
             correct += (prediction == labels).sum().item()
 
-        train_loss = train_loss / len(self.train_loader)
+        train_loss = total_loss / len(self.train_loader)
         train_acc = 100 * correct / total
 
         return len(self.train_loader),train_loss,train_acc

@@ -3,12 +3,13 @@ import datasets.np_transforms as tr
 
 from typing import Any
 from torch.utils.data import Dataset
+import torch
 
 IMAGE_SIZE = 28
 
-# transform = transforms.Compose([
-#     transforms.ToTensor(),
-#     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+#transform = torch.transforms.Compose([
+#    torch.transforms.ToTensor(),
+#    torch.transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
 # ])
 
 
@@ -27,7 +28,8 @@ class Femnist(Dataset):
     def __getitem__(self, index: int) -> Any:
         # chiamata da torch, torna immagine e label corrispondenti all'indice
         image, label = self.samples[index]
-        return image, label
+        tensor_img = torch.tensor(image)
+        return tensor_img.reshape(1, 28, 28), label
 
     def __len__(self) -> int:
         return len(self.samples)

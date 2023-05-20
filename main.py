@@ -7,6 +7,7 @@ import random
 
 import numpy as np
 from torchvision.models import resnet18
+from models.YourCNN import YourCNN
 
 import datasets.ss_transforms as sstr
 import datasets.np_transforms as nptr
@@ -48,8 +49,7 @@ def model_init(args):
         model.fc = nn.Linear(in_features=512, out_features=get_dataset_num_classes(args.dataset))
         return model
     if args.model == 'cnn':
-        # TODO: missing code here!
-        raise NotImplementedError
+        return YourCNN(num_classes=get_dataset_num_classes(args.dataset))
     raise NotImplementedError
 
 

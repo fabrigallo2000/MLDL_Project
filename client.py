@@ -37,6 +37,8 @@ class Client:
             # errore credo sul type di images, da errore sul type di oggetto anche solo chiamando self.model(images)
             return self.model(images)
         if self.args.model == 'cnn': #non va salvato un modello locale?
+            device = torch.device('cuda')
+            images = images.to(device)
             return self.model(images)
         else:
             raise NotImplementedError

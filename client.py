@@ -59,6 +59,9 @@ class Client:
         for cur_step, (images, labels) in enumerate(self.train_loader):
             optimizer.zero_grad()
             outputs = self._get_outputs(images)
+            # self.reduction è MeanReduction,
+            # fa solo una media dei valori di outputs, non guarda nemmeno le labels!
+            # va bene come loss?
             loss = self.reduction(outputs, labels)
             loss.backward()
             optimizer.step()
@@ -88,25 +91,22 @@ class Client:
 
         for epoch in range(self.args.num_epochs):
             _, loss,accuracy  = self.run_epoch(epoch, optimizer)
-            print(f'Client {self.name}, Epoch [{epoch + 1}/{self.args.num_epochs}], Loss: {loss:.4f}, Accuracy: {accuracy:.3f}')
+            print(f'Client {self.name}, Epoch [{epoch + 1}/{self.args.num_epochs}], Loss: {loss:.4f}, Accuracy: {accuracy:.5f}')
 
-        return n_samples
+        return
 
-    import torch
-
-def test(self, metric):
-    """
-    This method tests the model on the local dataset of the client.
-    :param metric: StreamMetric object
-    """
-    self.model.eval()  # Imposta il modello in modalità di valutazione (non addestramento)
-    with torch.no_grad():
-        for i, (images, labels) in enumerate(self.test_loader):
-            #images = images.to(self.device)
-            #labels = labels.to(self.device)
-            
-            outputs = self.model(images)  # Esegue l'inferenza sulle immagini
-            
-            self.update_metric(metric, outputs, labels)  # Aggiorna la metrica
-            
-   # self.model.train()  # Riporta il modello in modalità di addestramento
+    def test(self, metric):
+        """
+        This method tests the model on the local dataset of the client.
+        :param metric: StreamMetric object
+        """
+        self.model.eval()  # Imposta il modello in modalità di valutazione (non addestramento)
+        with torch.no_grad():
+            for i, (images, labels) in enumerate(self.test_loader):
+                images = images.cuda()
+                
+                outputs = self.model(images)  # Esegue l'inferenza sulle immagini
+                
+                self.update_metric(metric, outputs, labels)  # Aggiorna la metrica
+                
+        # self.model.train()  # Riporta il modello in modalità di addestramento

@@ -91,8 +91,9 @@ class Server:
             print(f"Round {r + 1}: Train Loss: {train_loss:.4f}, Train Accuracy: {train_accuracy:.4f}")
 
             # Test on test clients
-            test_loss, test_accuracy = self.test()
-            print(f"Round {r + 1}: Test Loss: {test_loss:.4f}, Test Accuracy: {test_accuracy:.4f}")
+            # attualmente self.test non ritorna nulla/ non fa nulla
+            #test_loss, test_accuracy = self.test()
+            #print(f"Round {r + 1}: Test Loss: {test_loss:.4f}, Test Accuracy: {test_accuracy:.4f}")
 
     def eval_train(self):
         """This method handles the evaluation on the train clients. """
@@ -145,6 +146,20 @@ class Server:
         accuracy = total_correct / total_samples
 
         return avg_loss, accuracy
+    
+    def test(self):
+        """
+        This method handles the test on the test clients
+        """
+        for client in self.test_clients:
+            metric = self.metrics  
+            client.model.load_state_dict(self.model_params_dict)
+            client.test(metric)  # Esegue il test utilizzando il metodo test del client
+
+            # Stampa i risultati della metrica per il client corrente
+            print(f"Testing  client {client.name}")
+        # metric e dict, dict non ha funzione get results
+        # print(f"Accuracy: {metric.get_results()}")
 
 
 '''def test(self):
@@ -206,16 +221,4 @@ def test(self, metric):
             
     #self.model.train()  # Riporta il modello in modalità di addestramento'''
 
-def test(self):
-    """
-    This method handles the test on the test clients
-    """
-    for client in self.test_clients:
-        metric = self.metrics  
-        c.model.load_state_dict(self.model_params_dict)
-        client.test(metric)  # Esegue il test utilizzando il metodo test del client
-
-        # Stampa i risultati della metrica per il client corrente
-        print(f"Testing  client {client.name}")
-    print(f"Accuracy: {metric.get_results()}")
     

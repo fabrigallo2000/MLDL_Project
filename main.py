@@ -72,7 +72,7 @@ def get_transforms(args):
         ])
         test_transforms = nptr.Compose([
             nptr.ToTensor(),
-            nptr.Normalize((0.5,), (0.5,)),
+            nptr.Normalize((0.5,), (0.5,)), 
         ])
     else:
         raise NotImplementedError

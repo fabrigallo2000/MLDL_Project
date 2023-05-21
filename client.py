@@ -52,9 +52,10 @@ class Client:
         """
         self.model.train()
         total_loss = 0
-        total_metric = defaultdict(float)
+        #total_metric = defaultdict(float)
         total = 0
         correct =0
+        loss_function=self.criterion()
 
         for cur_step, (images, labels) in enumerate(self.train_loader):
             optimizer.zero_grad()
@@ -62,14 +63,18 @@ class Client:
             # self.reduction è MeanReduction,
             # fa solo una media dei valori di outputs, non guarda nemmeno le labels!
             # va bene come loss?
-            loss = self.reduction(outputs, labels)
+            #loss = self.reduction(outputs, labels)
+            loss= loss_function(outputs,labels)
             loss.backward()
             optimizer.step()
             total_loss += loss.item()
-            self.update_metric(total_metric, outputs, labels)
-            _, prediction = torch.max(outputs.data, 1)  # grab prediction as one-dimensional tensor
+            print('this are putputs',outputs)
+            #self.update_metric(total_metric, outputs, labels)
+            _, prediction = torch.max(outputs.data, 1)
+            print('this is the prediction:' ,prediction)  # grab prediction as one-dimensional tensor
             total += labels.size(0)
             labels = labels.cuda()
+            print('this are the labels:',labels)
             correct += (prediction == labels).sum().item()
 
         train_loss = total_loss / len(self.train_loader)

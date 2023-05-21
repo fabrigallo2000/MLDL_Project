@@ -27,7 +27,7 @@ class Server:
         updates = []
         for i, c in enumerate(clients):
            
-            # train the client
+            # train the client 
             
             c.model.load_state_dict(self.model_params_dict)
             c.train()

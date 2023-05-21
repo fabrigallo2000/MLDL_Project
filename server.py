@@ -13,10 +13,34 @@ class Server:
         self.model = model
         self.metrics = metrics
         self.model_params_dict = copy.deepcopy(self.model.state_dict())
+        self.prob = {
+            'clients_per_round': 10,
+            'prob_10_clients': 0.5,
+            'prob_30_clients': 0.0001
+        }
 
     def select_clients(self):
         num_clients = min(self.args.clients_per_round, len(self.train_clients))
         return np.random.choice(self.train_clients, num_clients, replace=False)
+    
+    def smart_select_clients(self):
+        
+        num_clients = self.args.clients_per_round
+        client_probs = np.ones(len(self.train_clients))
+
+        # Set probability for 10% of clients
+        num_10_clients = int(0.1 * num_clients)
+        client_probs[:num_10_clients] = self.prob['prob_10_clients']
+
+        # Set probability for 30% of clients
+        num_30_clients = int(0.3 * num_clients)
+        client_probs[num_10_clients:num_10_clients + num_30_clients] = self.prob['prob_30_clients']
+
+        # Normalize probabilities
+        client_probs /= np.sum(client_probs)
+
+        selected_clients = np.random.choice(self.train_clients, num_clients, replace=False, p=client_probs)
+        return selected_clients
 
     def train_round(self, clients):
         """
@@ -29,7 +53,8 @@ class Server:
            
             # train the client 
             
-            c.model.load_state_dict(self.model_params_dict)
+            #c.model.load_state_dict(self.model_params_dict)
+            c.model.load_state_dict(copy.deepcopy(self.model.state_dict()))
             c.train()
             # Train the client model using its dataset
             '''for _ in range(self.args.local_epochs):
@@ -43,7 +68,7 @@ class Server:
                     client_optimizer.step()'''
 
             # Get the updated model's parameters
-            updated_params = c.model.state_dict()
+            updated_params = copy.deepcopy(c.model.state_dict())
 
             # Compute the difference between the current and updated parameters
             updates.append(OrderedDict({key: updated_params[key] - self.model_params_dict[key] for key in updated_params}))

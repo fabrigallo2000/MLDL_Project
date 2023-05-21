@@ -13,12 +13,13 @@ class Client:
         self.dataset = dataset
         # da decommentare quando usi femnist
         self.name = self.dataset.client_name
-        self.model = model
+        self.model = copy.deepcopy(model)
         self.train_loader = DataLoader(self.dataset, batch_size=self.args.bs, shuffle=True, drop_last=True) \
             if not test_client else None
         self.test_loader = DataLoader(self.dataset, batch_size=1, shuffle=False)
-        self.criterion = nn.CrossEntropyLoss(ignore_index=255, reduction='none')
+        self.criterion = nn.CrossEntropyLoss(ignore_index=255, reduction='mean') # per ora userei questo
         self.reduction = HardNegativeMining() if self.args.hnm else MeanReduction()
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     def __str__(self):
         return self.name
@@ -38,8 +39,8 @@ class Client:
             # errore credo sul type di images, da errore sul type di oggetto anche solo chiamando self.model(images)
             return self.model(images)
         if self.args.model == 'cnn': #non va salvato un modello locale?
-            device = torch.device('cuda')
-            images = images.to(device)
+            #device = torch.device('cuda')
+            #images = images.to(device)
             return self.model(images)
         else:
             raise NotImplementedError
@@ -59,6 +60,8 @@ class Client:
 
         for cur_step, (images, labels) in enumerate(self.train_loader):
             optimizer.zero_grad()
+            images = images.to(self.device)  # Move images to the same device as model and labels
+            labels = labels.to(self.device)
             outputs = self._get_outputs(images)
             # self.reduction è MeanReduction,
             # fa solo una media dei valori di outputs, non guarda nemmeno le labels!
@@ -68,13 +71,13 @@ class Client:
             loss.backward()
             optimizer.step()
             total_loss += loss.item()
-            print('this are putputs',outputs)
+            #print('this are putputs',outputs)
             #self.update_metric(total_metric, outputs, labels)
             _, prediction = torch.max(outputs.data, 1)
-            print('this is the prediction:' ,prediction)  # grab prediction as one-dimensional tensor
+            #print('this is the prediction:' ,prediction)  # grab prediction as one-dimensional tensor
             total += labels.size(0)
-            labels = labels.cuda()
-            print('this are the labels:',labels)
+            #labels = labels.cuda()
+            #print('this are the labels:',labels)
             correct += (prediction == labels).sum().item()
 
         train_loss = total_loss / len(self.train_loader)
@@ -92,8 +95,8 @@ class Client:
         #n_samples = len(self.train_loader.dataset) #esce spesso un errore, capire come risolvere nel caso
         #local_model = copy.deepcopy(self.model) #state dict tira fuori il dizionario: non ha utilità ma salvare il locale si 
 
-        optimizer = optim.SGD(self.model.parameters(), lr=self.args.lr, momentum=0.9) #da vedere se salvare il locale
-
+        optimizer = optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9) #da vedere se salvare il locale da modificare poi per fare tuning
+        self.model=self.model.to(self.device)
         for epoch in range(self.args.num_epochs):
             _, loss,accuracy  = self.run_epoch(epoch, optimizer)
             print(f'Client {self.name}, Epoch [{epoch + 1}/{self.args.num_epochs}], Loss: {loss:.4f}, Accuracy: {accuracy:.5f}')

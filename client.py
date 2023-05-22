@@ -67,7 +67,7 @@ class Client:
             # fa solo una media dei valori di outputs, non guarda nemmeno le labels!
             # va bene come loss?
             loss = self.reduction(outputs, labels)
-            #loss= loss_function(outputs,labels)
+            loss= self.criterion(outputs,labels)
             loss.backward()
             optimizer.step()
             total_loss += loss.item()

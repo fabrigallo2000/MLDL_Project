@@ -56,7 +56,7 @@ class Client:
         #total_metric = defaultdict(float)
         total = 0
         correct =0
-        loss_function=self.criterion()
+        #loss_function=self.criterion()
 
         for cur_step, (images, labels) in enumerate(self.train_loader):
             optimizer.zero_grad()
@@ -66,8 +66,8 @@ class Client:
             # self.reduction è MeanReduction,
             # fa solo una media dei valori di outputs, non guarda nemmeno le labels!
             # va bene come loss?
-            #loss = self.reduction(outputs, labels)
-            loss= loss_function(outputs,labels)
+            loss = self.reduction(outputs, labels)
+            #loss= loss_function(outputs,labels)
             loss.backward()
             optimizer.step()
             total_loss += loss.item()

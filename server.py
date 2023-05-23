@@ -30,12 +30,12 @@ class Server:
         if prob == 10:# Set probability for 10% of clients
             num_10_clients = int(0.1 * num_clients)
             client_probs[:num_10_clients] = self.prob['prob_10_clients']/num_10_clients
-            client_probs[num_10_clients:] = 0.5/(num_clients - num_10_clients)
+            client_probs[num_10_clients:] = (1-self.prob['prob_10_clients'])/(num_clients - num_10_clients)
         elif prob==30:
             # Set probability for 30% of clients
             num_30_clients = int(0.3 * num_clients)
             client_probs[:num_30_clients] = self.prob['prob_30_clients']/num_30_clients
-            client_probs[num_30_clients:] = 0.5/(num_clients - num_30_clients)
+            client_probs[num_30_clients:] = (1-self.prob['prob_30_clients'])/(num_clients - num_30_clients)
 
 
         # Normalize probabilities

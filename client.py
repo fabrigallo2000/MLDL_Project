@@ -84,7 +84,7 @@ class Client:
         train_acc = 100 * correct / total
 
         return len(self.train_loader),train_loss,train_acc
-
+    
 
     def train(self):
         """
@@ -118,3 +118,6 @@ class Client:
                 self.update_metric(metric, outputs, labels)  # Aggiorna la metrica
                 
         # self.model.train()  # Riporta il modello in modalità di addestramento
+
+    def get_len(self):
+            return len(self.train_loader)

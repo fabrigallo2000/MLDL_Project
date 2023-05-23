@@ -109,11 +109,11 @@ class Server:
     def aggregate(self, updates, clients):
     
         aggregated_params = OrderedDict()
-        total_samples = sum(c.num_samples for c in clients)
+        total_samples = sum(c.get_len() for c in clients)
 
         for key in updates[0].keys():
         # Sum the weighted updates for each parameter
-            param_sum = sum([updates[i][key] * clients[i].num_samples / total_samples for i in range(len(clients))])
+            param_sum = sum([updates[i][key] * clients[i].get_len() / total_samples for i in range(len(clients))])
         # Apply the weighted average update to the server's model parameters
             aggregated_params[key] = self.model_params_dict[key] + param_sum
 
@@ -132,7 +132,7 @@ class Server:
             updates = self.train_round(clients)
 
             # Aggregate the updates
-            aggregated_params = self.aggregate(updates)
+            aggregated_params = self.aggregate(updates, clients)
 
             # Update the server's model parameters
             self.model.load_state_dict(aggregated_params)

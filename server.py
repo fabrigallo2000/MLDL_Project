@@ -24,7 +24,7 @@ class Server:
         return np.random.choice(self.train_clients, num_clients, replace=False)
     
     def generate_probs(self, prob):
-        num_clients = len(self.trian_clients)
+        num_clients = len(self.train_clients)
         client_probs = np.ones(len(self.train_clients))
 
         if prob == 10:# Set probability for 10% of clients
@@ -47,7 +47,7 @@ class Server:
     def smart_select_clients(self):
         #punto 1 pag 7, probability=10 genera 10% di utenti che complessivamente ha 50% di probabilità dei essere scelto
         # se probability = 30 genera il 30% di utenti che complessivamente ha lo 0.01% di prob di esere scelto
-        probability: 10
+        probability= 10
         self.generate_probs(probability)
 
         num_clients = self.args.clients_per_round

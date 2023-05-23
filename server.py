@@ -23,23 +23,36 @@ class Server:
         num_clients = min(self.args.clients_per_round, len(self.train_clients))
         return np.random.choice(self.train_clients, num_clients, replace=False)
     
-    def smart_select_clients(self):
-        
-        num_clients = self.args.clients_per_round
+    def generate_probs(self, prob):
+        num_clients = len(self.train_clients)
         client_probs = np.ones(len(self.train_clients))
 
-        # Set probability for 10% of clients
-        num_10_clients = int(0.1 * num_clients)
-        client_probs[:num_10_clients] = self.prob['prob_10_clients']
+        if prob == 10:# Set probability for 10% of clients
+            num_10_clients = int(0.1 * num_clients)
+            client_probs[:num_10_clients] = self.prob['prob_10_clients']/num_10_clients
+            client_probs[num_10_clients:] = (1-self.prob['prob_10_clients'])/(num_clients - num_10_clients)
+        elif prob==30:
+            # Set probability for 30% of clients
+            num_30_clients = int(0.3 * num_clients)
+            client_probs[:num_30_clients] = self.prob['prob_30_clients']/num_30_clients
+            client_probs[num_30_clients:] = (1-self.prob['prob_30_clients'])/(num_clients - num_30_clients)
 
-        # Set probability for 30% of clients
-        num_30_clients = int(0.3 * num_clients)
-        client_probs[num_10_clients:num_10_clients + num_30_clients] = self.prob['prob_30_clients']
 
         # Normalize probabilities
         client_probs /= np.sum(client_probs)
 
-        selected_clients = np.random.choice(self.train_clients, num_clients, replace=False, p=client_probs)
+        self.client_probs=client_probs
+
+
+    def smart_select_clients(self):
+        #punto 1 pag 7, probability=10 genera 10% di utenti che complessivamente ha 50% di probabilità dei essere scelto
+        # se probability = 30 genera il 30% di utenti che complessivamente ha lo 0.01% di prob di esere scelto
+        probability= 10
+        self.generate_probs(probability)
+
+        num_clients = self.args.clients_per_round
+
+        selected_clients = np.random.choice(self.train_clients, num_clients, replace=False, p=self.client_probs)
         return selected_clients
 
     def train_round(self, clients):
@@ -113,7 +126,7 @@ class Server:
         """
         for r in range(self.args.num_rounds):
             # Select clients for this round
-            clients = self.select_clients()
+            clients = self.smart_select_clients()
 
             # Train clients and gather updates
             updates = self.train_round(clients)

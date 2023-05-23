@@ -88,7 +88,7 @@ class Server:
 
         return updates
 
-    def aggregate(self, updates):
+    '''def aggregate(self, updates):
         """
         This method handles the FedAvg aggregation.
         :param updates: updates received from the clients
@@ -105,7 +105,20 @@ class Server:
             # Apply the average update to the server's model parameters
             aggregated_params[key] = self.model_params_dict[key] + avg_param
 
+        return aggregated_params'''
+    def aggregate(self, updates, clients):
+    
+        aggregated_params = OrderedDict()
+        total_samples = sum(c.num_samples for c in clients)
+
+        for key in updates[0].keys():
+        # Sum the weighted updates for each parameter
+            param_sum = sum([updates[i][key] * clients[i].num_samples / total_samples for i in range(len(clients))])
+        # Apply the weighted average update to the server's model parameters
+            aggregated_params[key] = self.model_params_dict[key] + param_sum
+
         return aggregated_params
+
 
     def train(self):
         """
@@ -126,7 +139,7 @@ class Server:
 
             # Evaluate on train clients
             train_loss, train_accuracy = self.eval_train()
-            print(f"Round {r + 1}: Train Loss: {train_loss:.4f}, Train Accuracy: {train_accuracy:.4f}")
+            print(f"Round {r + 1}: Train Loss: {train_loss:.4f}, Train Accuracy: {100*train_accuracy:.4f}")
 
             # Test on test clients
             # attualmente self.test non ritorna nulla/ non fa nulla

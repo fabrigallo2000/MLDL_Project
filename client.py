@@ -20,6 +20,7 @@ class Client:
         self.criterion = nn.CrossEntropyLoss(ignore_index=255, reduction='mean') # per ora userei questo
         self.reduction = HardNegativeMining() if self.args.hnm else MeanReduction()
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.loss_POC = 0
 
     def __str__(self):
         return self.name
@@ -44,6 +45,27 @@ class Client:
             return self.model(images)
         else:
             raise NotImplementedError
+        
+    def run_epoch_POC(self, cur_epoch, optimizer, num_batches):
+    
+        self.model.train()
+        total_loss = 0
+
+        for cur_step, (images, labels) in enumerate(self.train_loader):
+            optimizer.zero_grad()
+            images = images.to(self.device)
+            labels = labels.to(self.device)
+            outputs = self._get_outputs(images)
+            loss = self.reduction(outputs, labels)
+            loss.backward()
+            optimizer.step()
+            total_loss += loss.item()
+
+            if cur_step + 1 == num_batches:
+                break
+
+        average_loss = total_loss / num_batches
+        return average_loss
 
     def run_epoch(self, cur_epoch, optimizer):
         """
@@ -86,7 +108,7 @@ class Client:
         return len(self.train_loader),train_loss,train_acc
     
 
-    def train(self):
+    def train(self,POC):
         """
         This method locally trains the model with the dataset of the client. It handles the training at epochs level
         (by calling the run_epoch method for each local epoch of training)
@@ -97,11 +119,16 @@ class Client:
 
         optimizer = optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9) #da vedere se salvare il locale da modificare poi per fare tuning
         self.model=self.model.to(self.device)
-        for epoch in range(self.args.num_epochs):
-            _, loss,accuracy  = self.run_epoch(epoch, optimizer)
-            print(f'Client {self.name}, Epoch [{epoch + 1}/{self.args.num_epochs}], Loss: {loss:.4f}, Accuracy: {accuracy:.5f}')
+        if POC:
+            for epoch in range(self.args.num_epochs):
+                loss = self.run_epoch_POC(epoch, optimizer,15)
+                return loss
+        else:
+            for epoch in range(self.args.num_epochs):
+                _, loss,accuracy  = self.run_epoch(epoch, optimizer)
+                print(f'Client {self.name}, Epoch [{epoch + 1}/{self.args.num_epochs}], Loss: {loss:.4f}, Accuracy: {accuracy:.5f}')
 
-        return
+        return 'done'
 
     def test(self, metric):
         """

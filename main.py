@@ -180,7 +180,7 @@ def main():
 
     metrics = set_metrics(args)
     train_clients, test_clients = gen_clients(args, train_datasets, test_datasets, model)
-    server = Server(args, train_clients, test_clients, model, metrics)
+    server = Server(args, train_clients, test_clients, model, metrics,True) #quando c'è true fa la POC
     server.train()
 
 

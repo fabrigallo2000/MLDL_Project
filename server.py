@@ -6,7 +6,7 @@ import torch
 
 
 class Server:
-    def __init__(self, args, train_clients, test_clients, model, metrics):
+    def __init__(self, args, train_clients, test_clients, model, metrics,POC=False):
         self.args = args
         self.train_clients = train_clients
         self.test_clients = test_clients
@@ -18,6 +18,7 @@ class Server:
             'prob_10_clients': 0.5,
             'prob_30_clients': 0.0001
         }
+        self.POC= POC
 
     def select_clients(self):
         num_clients = min(self.args.clients_per_round, len(self.train_clients))
@@ -43,6 +44,10 @@ class Server:
 
         self.client_probs=client_probs
 
+    def get_clients_with_highest_losses(clients, d):
+        sorted_clients = sorted(clients.items(), key=lambda x: x[1], reverse=True)
+        top_clients = sorted_clients[:d]
+        return top_clients
 
     def smart_select_clients(self):
         #punto 1 pag 7, probability=10 genera 10% di utenti che complessivamente ha 50% di probabilità dei essere scelto
@@ -51,11 +56,15 @@ class Server:
         self.generate_probs(probability)
 
         num_clients = self.args.clients_per_round
-
+        clients = {}
         selected_clients = np.random.choice(self.train_clients, num_clients, replace=False, p=self.client_probs)
-        return selected_clients
+        for client in selected_clients:
+            loss = client.train(True)
+            clients[client] = loss
+        
+        return self.get_clients_with_highest_losses(clients,0.4*num_clients)
 
-    def train_round(self, clients):
+    def train_round(self, clients, POC=False):
         """
         This method trains the model with the dataset of the clients. It handles the training at single round level.
         :param clients: list of all the clients to train
@@ -68,18 +77,8 @@ class Server:
             
             #c.model.load_state_dict(self.model_params_dict)
             c.model.load_state_dict(copy.deepcopy(self.model.state_dict()))
-            c.train()
-            # Train the client model using its dataset
-            '''for _ in range(self.args.local_epochs):
-                for _, (data, target) in enumerate(c.train_loader):
-                    data, target = data.to(self.args.device), target.to(self.args.device)
-
-                    self.args.optimizer.zero_grad()
-                    output = client_model(data)
-                    loss = torch.nn.functional.cross_entropy(output, target)
-                    loss.backward()
-                    client_optimizer.step()'''
-
+            c.train(False)
+                
             # Get the updated model's parameters
             updated_params = copy.deepcopy(c.model.state_dict())
 
@@ -88,24 +87,6 @@ class Server:
 
         return updates
 
-    '''def aggregate(self, updates):
-        """
-        This method handles the FedAvg aggregation.
-        :param updates: updates received from the clients
-        :return: aggregated parameters
-        """
-        aggregated_params = OrderedDict()
-        num_updates = len(updates)
-
-        for key in updates[0].keys():
-            # Sum the updates for each parameter
-            param_sum = sum([updates[i][key] for i in range(num_updates)])
-            # Calculate the average update
-            avg_param = param_sum / num_updates
-            # Apply the average update to the server's model parameters
-            aggregated_params[key] = self.model_params_dict[key] + avg_param
-
-        return aggregated_params'''
     def aggregate(self, updates, clients):
     
         aggregated_params = OrderedDict()
@@ -130,7 +111,10 @@ class Server:
 
         for r in range(self.args.num_rounds):
             # Select clients for this round
-            clients = self.smart_select_clients()
+            if self.POC:
+                clients = self.smart_select_clients()
+            else :
+                clients= self.select_clients()
 
             # Train clients and gather updates
             updates = self.train_round(clients)

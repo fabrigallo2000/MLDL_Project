@@ -124,6 +124,10 @@ class Server:
         """
         This method orchestrates the training, evaluations, and tests at the round level.
         """
+        #creo variabili per loss e accuracy per grafici
+        df_loss = pd.DataFrame(columns=['x_round','y'])
+        df_accuracy = pd.DataFrame(columns=['x_round', 'y'])
+
         for r in range(self.args.num_rounds):
             # Select clients for this round
             clients = self.smart_select_clients()
@@ -141,10 +145,18 @@ class Server:
             train_loss, train_accuracy = self.eval_train()
             print(f"Round {r + 1}: Train Loss: {train_loss:.4f}, Train Accuracy: {100*train_accuracy:.4f}")
 
+            # salvo dati del round
+            df_loss.loc[len(df_loss)] = [r+1, train_loss]
+            df_accuracy.loc[len(df_accuracy)] = [r+1, train_accuracy]
+
             # Test on test clients
             # attualmente self.test non ritorna nulla/ non fa nulla
             #test_loss, test_accuracy = self.test()
             #print(f"Round {r + 1}: Test Loss: {test_loss:.4f}, Test Accuracy: {test_accuracy:.4f}")
+            
+        # salvataggio file dati
+        df_loss.to_csv('loss_1epoch_5clientPerRound_25r_IID.csv', index=False)
+        df_accuracy.to_csv('accuracy_1epoch_5clientPerRound_25r_IID.csv', index=False)
 
     def eval_train(self):
         """This method handles the evaluation on the train clients. """

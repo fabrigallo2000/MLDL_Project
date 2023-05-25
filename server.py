@@ -1,6 +1,8 @@
 import copy
 from collections import OrderedDict
 
+import pandas as pd
+
 import numpy as np
 import torch
 
@@ -128,7 +130,8 @@ class Server:
 
             # Evaluate on train clients
             train_loss, train_accuracy = self.eval_train()
-            print(f"Round {r + 1}: Train Loss: {train_loss:.4f}, Train Accuracy: {100*train_accuracy:.4f}")
+            train_accuracy = train_accuracy * 100
+            print(f"Round {r + 1}: Train Loss: {train_loss:.4f}, Train Accuracy: {train_accuracy:.4f}")
 
             # salvo dati del round
             df_loss.loc[len(df_loss)] = [r+1, train_loss]

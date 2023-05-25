@@ -44,7 +44,7 @@ class Server:
 
         self.client_probs=client_probs
 
-    def get_clients_with_highest_losses(clients, d):
+    def get_clients_with_highest_losses(self,clients, d):
         sorted_clients = sorted(clients.items(), key=lambda x: x[1], reverse=True)
         top_clients = sorted_clients[:d]
         return top_clients
@@ -60,9 +60,9 @@ class Server:
         selected_clients = np.random.choice(self.train_clients, num_clients, replace=False, p=self.client_probs)
         for client in selected_clients:
             loss = client.train(True)
-            clients[client] = loss
+            clients[client] = abs(loss)
         
-        return self.get_clients_with_highest_losses(clients,0.4*num_clients)
+        return self.get_clients_with_highest_losses(clients,int(0.4*num_clients))
 
     def train_round(self, clients, POC=False):
         """
@@ -71,8 +71,8 @@ class Server:
         :return: model updates gathered from the clients, to be aggregated
         """
         updates = []
-        for i, c in enumerate(clients):
-           
+        for  i,c in enumerate(clients):
+            
             # train the client 
             
             #c.model.load_state_dict(self.model_params_dict)
@@ -91,7 +91,7 @@ class Server:
     
         aggregated_params = OrderedDict()
         total_samples = sum(c.get_len() for c in clients)
-
+       
         for key in updates[0].keys():
         # Sum the weighted updates for each parameter
             param_sum = sum([updates[i][key] * clients[i].get_len() / total_samples for i in range(len(clients))])
@@ -113,9 +113,10 @@ class Server:
             # Select clients for this round
             if self.POC:
                 clients = self.smart_select_clients()
+                clients = [client[0] for client in clients]
+
             else :
                 clients= self.select_clients()
-
             # Train clients and gather updates
             updates = self.train_round(clients)
 

@@ -3,20 +3,20 @@ import torch
 from torch import optim, nn
 from collections import defaultdict
 from torch.utils.data import DataLoader
-
+from FedSR_pers import *
 from utils.utils import HardNegativeMining, MeanReduction
 
 class Client:
 
-    def __init__(self, args, dataset, model, test_client=False):
+    def __init__(self, args, dataset, model, transformation=None,test_client=False):
         self.args = args
         self.dataset = dataset
         # da decommentare quando usi femnist
         self.name = self.dataset.client_name
         self.model = copy.deepcopy(model)
-        self.train_loader = DataLoader(self.dataset, batch_size=self.args.bs, shuffle=True, drop_last=True) \
+        self.train_loader = DataLoader(self.dataset, batch_size=self.args.bs, shuffle=True, drop_last=True,transform=transformation) \
             if not test_client else None
-        self.test_loader = DataLoader(self.dataset, batch_size=1, shuffle=False)
+        self.test_loader = DataLoader(self.dataset, batch_size=1, shuffle=False,transform=transformation)
         self.criterion = nn.CrossEntropyLoss(ignore_index=255, reduction='mean') # per ora userei questo
         self.reduction = HardNegativeMining() if self.args.hnm else MeanReduction()
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -67,12 +67,14 @@ class Client:
         average_loss = total_loss / num_batches
         return average_loss
 
-    def run_epoch(self, cur_epoch, optimizer):
+    def run_epoch(self, cur_epoch, optimizer,FedSR=True):
         """
         This method locally trains the model with the dataset of the client. It handles the training at mini-batch level
         :param cur_epoch: current epoch of training
         :param optimizer: optimizer used for the local training
         """
+        if FedSR:
+            compute_loss(self.model,self.criterion, optimizer, self.train_loader,self.device,)
         self.model.train()
         total_loss = 0
         #total_metric = defaultdict(float)

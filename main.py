@@ -53,9 +53,9 @@ def model_init(args):
     raise NotImplementedError
 
 
-def get_transforms(args):
+def get_transforms(args,angle=None):
     # TODO: test your data augmentation by changing the transforms here!
-    if args.model == 'deeplabv3_mobilenetv2':
+    if args.model == 'deeplabv3_mobilenetv2' and angle == None:
         train_transforms = sstr.Compose([
             sstr.RandomResizedCrop((512, 928), scale=(0.5, 2.0)),
             sstr.ToTensor(),
@@ -65,7 +65,7 @@ def get_transforms(args):
             sstr.ToTensor(),
             sstr.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ])
-    elif args.model == 'cnn' or args.model == 'resnet18':
+    elif args.model == 'cnn' or args.model == 'resnet18' and angle == None:
         train_transforms = nptr.Compose([
             nptr.ToTensor(),
             nptr.Normalize((0.5,), (0.5,)),
@@ -74,8 +74,14 @@ def get_transforms(args):
             nptr.ToTensor(),
             nptr.Normalize((0.5,), (0.5,)), 
         ])
-    else:
-        raise NotImplementedError
+    elif args.model=='cnn' and angle != None:
+        train_transforms = nptr.Compose([nptr.ToPILImage(),  # Converte il tensore in immagine PIL
+         nptr.Rotate(angle),  # Applica la rotazione
+         nptr.ToTensor()])
+        
+
+
+        
     return train_transforms, test_transforms
 
 
@@ -126,7 +132,7 @@ def get_datasets(args):
         train_transforms, test_transforms = get_transforms(args)
 
         train_datasets, test_datasets = [], []
-
+        i
         for user, data in train_data.items():
             train_datasets.append(Femnist(data, train_transforms, user))
         for user, data in test_data.items():
@@ -156,11 +162,28 @@ def set_metrics(args):
     return metrics
 
 
-def gen_clients(args, train_datasets, test_datasets, model):
+def gen_clients(args, train_datasets, test_datasets, model,rotate=True): # impostare o meno la rotazione qui
     clients = [[], []]
     for i, datasets in enumerate([train_datasets, test_datasets]):
         for ds in datasets:
-            clients[i].append(Client(args, ds, model, test_client=i == 1))
+            angle=None
+            if rotate:
+                angles = [0, 15, 30, 45, 60, 75]
+                angle = np.random.choice(angles)
+            clients[i].append(Client(args, ds, model,get_transforms(args,angle)),test_client=i == 1) # qua,se si decide di ruotare l'angolo avviene in modo casuale
+    return clients[0], clients[1]
+
+def gen_clients_LOO(args, train_datasets, test_datasets, model,rotate=True): # impostare o meno la rotazione qui
+    clients = [[], []]
+    for i, datasets in enumerate([train_datasets, test_datasets]):
+        for ds in datasets:
+            angle=None
+            if rotate and i==0:
+                angles = [0, 15, 30, 45, 75] # impostare 5 angoli per il training
+                angle = np.random.choice(angles)
+            elif rotate and i==1:
+                angle=60
+            clients[i].append(Client(args, ds, model,get_transforms(args,angle)),test_client=i == 1)
     return clients[0], clients[1]
 
 
@@ -168,7 +191,8 @@ def main():
     parser = get_parser()
     args = parser.parse_args()
     set_seed(args.seed)
-
+    rotate=True # per scegliere se far ruotare o meno (Punto 5)
+    rotate_LOO=True # per decidere se far ruotare con leave-one-domain-out
     print(f'Initializing model...')
     model = model_init(args)
     model.cuda()
@@ -179,7 +203,10 @@ def main():
     print('Done.')
 
     metrics = set_metrics(args)
-    train_clients, test_clients = gen_clients(args, train_datasets, test_datasets, model)
+    if rotate_LOO==False:
+        train_clients, test_clients = gen_clients(args, train_datasets, test_datasets, model,rotate)
+    else :
+        train_clients, test_clients = gen_clients_LOO(args, train_datasets, test_datasets, model,rotate)
     server = Server(args, train_clients, test_clients, model, metrics,True) #quando c'è true fa la POC
     server.train()
 

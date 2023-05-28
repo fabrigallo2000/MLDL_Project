@@ -2,37 +2,29 @@ import torch
 import torch.nn.functional as F
 import torch.distributions as dist
 import torch.nn as nn
+import copy
 
 
 
-def featurize(model, x, probabilistic=True, z_dim=512):
+def featurize(model, x, probabilistic=True, z_dim=32):
     if not probabilistic:
         return model(x)
     else:
         z_params = model(x)
-        z_mu = z_params[:, :z_dim]
+        z_mu = z_params[:, :z_dim] #anche qua è il punto cruciale
         z_sigma = F.softplus(z_params[:, z_dim:])
         z_dist = dist.Independent(dist.Normal(z_mu, z_sigma), 1)
-        z = z_dist.rsample().view([-1, z_dim])
+        z = z_dist.rsample([1]).view([-1, z_dim])
         
-        return z
-
-def forward(model, x, probabilistic=True):
-    if not probabilistic:
-        return model(x)
-    else:
-        if model.training:
-            z = featurize(model, x, probabilistic)
-            return cls(z)
-        else:
-            z = featurize(model, x, probabilistic)
-            preds = torch.softmax(cls(z), dim=1)
-            return torch.log(preds)
+        return z,(z_mu,z_sigma)
 
 
-def compute_loss(model,criterion, optim, dataset,device,lr=0.001, num_classes=62, z_dim=512,L2R_coeff=0.01,CMI_coeff=0.001):
+
+def compute_loss(model,criterion, optim, dataset,device,lr=0.001, num_classes=62, z_dim=32,L2R_coeff=0.01,CMI_coeff=0.001):
     cls= nn.Linear(z_dim,num_classes)
-    model = nn.Sequential(model,cls())
+    cls.to(device)
+    model = copy.deepcopy(nn.Sequential(model,cls))
+    model.to(device)
     model.train()
 
     total_loss = 0
@@ -54,7 +46,7 @@ def compute_loss(model,criterion, optim, dataset,device,lr=0.001, num_classes=62
         z, (z_mu, z_sigma) = model.featurize(x, return_dist=True)
         logits = cls(z)
         
-        loss = criterion(logits, y)
+        loss = criterion(logits, y) #qua è il punto cruciale
 
         obj = loss
         regL2R = torch.zeros_like(obj)
@@ -103,10 +95,4 @@ def compute_loss(model,criterion, optim, dataset,device,lr=0.001, num_classes=62
     regNegEnt_avg = total_regNegEnt / total_samples
     acc=correct/total_samples
 
-    return {
-        'acc':  acc,
-        'loss': loss_avg,
-        'regL2R': regL2R_avg,
-        'regCMI': regCMI_avg,
-        'regNegEnt': regNegEnt_avg
-    }
+    return regL2R_avg, regCMI_avg, regNegEnt_avg ,acc, loss_avg, model

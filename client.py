@@ -15,10 +15,11 @@ class Client:
         # da decommentare quando usi femnist
         self.name = self.dataset.client_name
         self.model = copy.deepcopy(model)
-        self.dataset=MyDataset(self.dataset,transformation)
+        #self.dataset=MyDataset(self.dataset,transformation)
+        #devo vedere come è fatto il dataset per ruotarlo
         self.train_loader = DataLoader(self.dataset, batch_size=self.args.bs, shuffle=True, drop_last=True) \
             if not test_client else None
-        self.test_loader = DataLoader(self.dataset, batch_size=1, shuffle=False,transform=transformation)
+        self.test_loader = DataLoader(self.dataset, batch_size=1, shuffle=False)
         self.criterion = nn.CrossEntropyLoss(ignore_index=255, reduction='mean') # per ora userei questo
         self.reduction = HardNegativeMining() if self.args.hnm else MeanReduction()
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -76,40 +77,43 @@ class Client:
         :param optimizer: optimizer used for the local training
         """
         if FedSR:
-            compute_loss(self.model,self.criterion, optimizer, self.train_loader,self.device,)
-        self.model.train()
-        total_loss = 0
-        #total_metric = defaultdict(float)
-        total = 0
-        correct =0
-        #loss_function=self.criterion()
+            stats,acc,loss,model=compute_loss(self.model,self.criterion, optimizer, self.train_loader,self.device)
+            self.model=copy.deepcopy(model)
+            return stats,acc,loss
+        else:
+            self.model.train()
+            total_loss = 0
+            #total_metric = defaultdict(float)
+            total = 0
+            correct =0
+            #loss_function=self.criterion()
 
-        for cur_step, (images, labels) in enumerate(self.train_loader):
-            optimizer.zero_grad()
-            images = images.to(self.device)  # Move images to the same device as model and labels
-            labels = labels.to(self.device)
-            outputs = self._get_outputs(images)
-            # self.reduction è MeanReduction,
-            # fa solo una media dei valori di outputs, non guarda nemmeno le labels!
-            # va bene come loss?
-            loss = self.reduction(outputs, labels)
-            loss= self.criterion(outputs,labels)
-            loss.backward()
-            optimizer.step()
-            total_loss += loss.item()
-            #print('this are putputs',outputs)
-            #self.update_metric(total_metric, outputs, labels)
-            _, prediction = torch.max(outputs.data, 1)
-            #print('this is the prediction:' ,prediction)  # grab prediction as one-dimensional tensor
-            total += labels.size(0)
-            #labels = labels.cuda()
-            #print('this are the labels:',labels)
-            correct += (prediction == labels).sum().item()
+            for cur_step, (images, labels) in enumerate(self.train_loader):
+                optimizer.zero_grad()
+                images = images.to(self.device)  # Move images to the same device as model and labels
+                labels = labels.to(self.device)
+                outputs = self._get_outputs(images)
+                # self.reduction è MeanReduction,
+                # fa solo una media dei valori di outputs, non guarda nemmeno le labels!
+                # va bene come loss?
+                #loss = self.reduction(outputs, labels)
+                loss= self.criterion(outputs,labels)
+                loss.backward()
+                optimizer.step()
+                total_loss += loss.item()
+                #print('this are putputs',outputs)
+                #self.update_metric(total_metric, outputs, labels)
+                _, prediction = torch.max(outputs.data, 1)
+                #print('this is the prediction:' ,prediction)  # grab prediction as one-dimensional tensor
+                total += labels.size(0)
+                #labels = labels.cuda()
+                #print('this are the labels:',labels)
+                correct += (prediction == labels).sum().item()
 
-        train_loss = total_loss / len(self.train_loader)
-        train_acc = 100 * correct / total
+            train_loss = total_loss / len(self.train_loader)
+            train_acc = 100 * correct / total
 
-        return len(self.train_loader),train_loss,train_acc
+            return len(self.train_loader),train_loss,train_acc
     
 
     def train(self,POC):

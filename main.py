@@ -132,7 +132,7 @@ def get_datasets(args):
         train_transforms, test_transforms = get_transforms(args)
 
         train_datasets, test_datasets = [], []
-        i
+        
         for user, data in train_data.items():
             train_datasets.append(Femnist(data, train_transforms, user))
         for user, data in test_data.items():
@@ -165,25 +165,25 @@ def set_metrics(args):
 def gen_clients(args, train_datasets, test_datasets, model,rotate=True): # impostare o meno la rotazione qui
     clients = [[], []]
     for i, datasets in enumerate([train_datasets, test_datasets]):
+        angle=None
         for ds in datasets:
-            angle=None
             if rotate:
                 angles = [0, 15, 30, 45, 60, 75]
                 angle = np.random.choice(angles)
-            clients[i].append(Client(args, ds, model,get_transforms(args,angle)),test_client=i == 1) # qua,se si decide di ruotare l'angolo avviene in modo casuale
+            clients[i].append(Client(args, ds, model,get_transforms(args,angle),test_client=i == 1)) # qua,se si decide di ruotare l'angolo avviene in modo casuale
     return clients[0], clients[1]
 
 def gen_clients_LOO(args, train_datasets, test_datasets, model,rotate=True): # impostare o meno la rotazione qui
     clients = [[], []]
     for i, datasets in enumerate([train_datasets, test_datasets]):
+        angle=None
         for ds in datasets:
-            angle=None
             if rotate and i==0:
                 angles = [0, 15, 30, 45, 75] # impostare 5 angoli per il training
                 angle = np.random.choice(angles)
             elif rotate and i==1:
                 angle=60
-            clients[i].append(Client(args, ds, model,get_transforms(args,angle)),test_client=i == 1)
+            clients[i].append(Client(args, ds, model,get_transforms(args,angle),test_client=i == 1))
     return clients[0], clients[1]
 
 

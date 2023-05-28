@@ -129,8 +129,6 @@ def get_datasets(args):
         test_data_dir = os.path.join('data', 'femnist', 'data', 'niid' if niid else 'iid', 'test')
         train_data, test_data = read_femnist_data(train_data_dir, test_data_dir)
 
-        train_transforms, test_transforms = get_transforms(args)
-
         train_datasets, test_datasets = [], []
         
         for user, data in train_data.items():

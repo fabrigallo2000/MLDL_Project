@@ -14,7 +14,7 @@ class Client:
         # da decommentare quando usi femnist
         self.name = self.dataset.client_name
         self.model = copy.deepcopy(model)
-        self.train_loader = DataLoader(self.dataset, batch_size=self.args.bs, shuffle=True, drop_last=True,transform=transformation) \
+        self.train_loader = DataLoader(self.dataset, batch_size=self.args.bs, shuffle=True, drop_last=True) \
             if not test_client else None
         self.test_loader = DataLoader(self.dataset, batch_size=1, shuffle=False,transform=transformation)
         self.criterion = nn.CrossEntropyLoss(ignore_index=255, reduction='mean') # per ora userei questo

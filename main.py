@@ -89,11 +89,14 @@ def read_femnist_dir(data_dir):
     data = defaultdict(lambda: {})
     files = os.listdir(data_dir)
     files = [f for f in files if f.endswith('.json')]
+    limiter =0
     for f in files:
-        file_path = os.path.join(data_dir, f)
-        with open(file_path, 'r') as inf:
-            cdata = json.load(inf)
-        data.update(cdata['user_data'])
+         if limiter < 5: #risolve circa la saturazione di memoria con niid... ma legge solo 6 json su 36
+            file_path = os.path.join(data_dir, f)
+            with open(file_path, 'r') as inf:
+                cdata = json.load(inf)
+            data.update(cdata['user_data'])
+            limiter += 1
     return data
 
 

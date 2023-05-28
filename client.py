@@ -15,9 +15,7 @@ class Client:
         # da decommentare quando usi femnist
         self.name = self.dataset.client_name
         self.model = copy.deepcopy(model)
-        #self.dataset=MyDataset(self.dataset,transformation)
-        #devo vedere come è fatto il dataset per ruotarlo
-        self.train_loader = DataLoader(self.dataset, batch_size=self.args.bs, shuffle=True, drop_last=True) \
+        self.train_loader = DataLoader(self.dataset, batch_size=self.args.bs, shuffle=True, drop_last=True,transform=transformation) \
             if not test_client else None
         self.test_loader = DataLoader(self.dataset, batch_size=1, shuffle=False)
         self.criterion = nn.CrossEntropyLoss(ignore_index=255, reduction='mean') # per ora userei questo

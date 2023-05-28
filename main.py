@@ -89,11 +89,14 @@ def read_femnist_dir(data_dir):
     data = defaultdict(lambda: {})
     files = os.listdir(data_dir)
     files = [f for f in files if f.endswith('.json')]
+    limiter =0
     for f in files:
-        file_path = os.path.join(data_dir, f)
-        with open(file_path, 'r') as inf:
-            cdata = json.load(inf)
-        data.update(cdata['user_data'])
+         if limiter < 5: #risolve circa la saturazione di memoria con niid... ma legge solo 6 json su 36
+            file_path = os.path.join(data_dir, f)
+            with open(file_path, 'r') as inf:
+                cdata = json.load(inf)
+            data.update(cdata['user_data'])
+            limiter += 1
     return data
 
 
@@ -129,10 +132,8 @@ def get_datasets(args):
         test_data_dir = os.path.join('data', 'femnist', 'data', 'niid' if niid else 'iid', 'test')
         train_data, test_data = read_femnist_data(train_data_dir, test_data_dir)
 
-        train_transforms, test_transforms = get_transforms(args)
-
         train_datasets, test_datasets = [], []
-        i
+        
         for user, data in train_data.items():
             train_datasets.append(Femnist(data, train_transforms, user))
         for user, data in test_data.items():
@@ -165,25 +166,25 @@ def set_metrics(args):
 def gen_clients(args, train_datasets, test_datasets, model,rotate=True): # impostare o meno la rotazione qui
     clients = [[], []]
     for i, datasets in enumerate([train_datasets, test_datasets]):
+        angle=None
         for ds in datasets:
-            angle=None
             if rotate:
                 angles = [0, 15, 30, 45, 60, 75]
                 angle = np.random.choice(angles)
-            clients[i].append(Client(args, ds, model,get_transforms(args,angle)),test_client=i == 1) # qua,se si decide di ruotare l'angolo avviene in modo casuale
+            clients[i].append(Client(args, ds, model,get_transforms(args,angle),test_client=i == 1)) # qua,se si decide di ruotare l'angolo avviene in modo casuale
     return clients[0], clients[1]
 
 def gen_clients_LOO(args, train_datasets, test_datasets, model,rotate=True): # impostare o meno la rotazione qui
     clients = [[], []]
     for i, datasets in enumerate([train_datasets, test_datasets]):
+        angle=None
         for ds in datasets:
-            angle=None
             if rotate and i==0:
                 angles = [0, 15, 30, 45, 75] # impostare 5 angoli per il training
                 angle = np.random.choice(angles)
             elif rotate and i==1:
                 angle=60
-            clients[i].append(Client(args, ds, model,get_transforms(args,angle)),test_client=i == 1)
+            clients[i].append(Client(args, ds, model,get_transforms(args,angle),test_client=i == 1))
     return clients[0], clients[1]
 
 

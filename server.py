@@ -21,6 +21,7 @@ class Server:
             'prob_30_clients': 0.0001
         }
         self.POC= POC
+        self.FedSR=True
 
     def select_clients(self):
         num_clients = min(self.args.clients_per_round, len(self.train_clients))
@@ -78,11 +79,15 @@ class Server:
             # train the client 
             
             #c.model.load_state_dict(self.model_params_dict)
+            #MODIFICARE PER RICEVERE PARAMETRI DEL MODELLO ESTESO DI FEDSR
             c.model.load_state_dict(copy.deepcopy(self.model.state_dict()))
             c.train(False)
                 
             # Get the updated model's parameters
-            updated_params = copy.deepcopy(c.model.state_dict())
+            if self.FedSR:
+                updated_params = copy.deepcopy(c.net.state_dict())
+            else:
+                updated_params = copy.deepcopy(c.model.state_dict())
 
             # Compute the difference between the current and updated parameters
             updates.append(OrderedDict({key: updated_params[key] - self.model_params_dict[key] for key in updated_params}))
@@ -90,6 +95,18 @@ class Server:
         return updates
 
     def aggregate(self, updates, clients):
+    
+        aggregated_params = OrderedDict()
+        total_samples = sum(c.get_len() for c in clients)
+       
+        for key in updates[0].keys():
+        # Sum the weighted updates for each parameter
+            param_sum = sum([updates[i][key] * clients[i].get_len() / total_samples for i in range(len(clients))])
+        # Apply the weighted average update to the server's model parameters
+            aggregated_params[key] = self.model_params_dict[key] + param_sum
+
+        return aggregated_params
+    def aggregate_SR(self, updates, clients):
     
         aggregated_params = OrderedDict()
         total_samples = sum(c.get_len() for c in clients)
@@ -123,7 +140,10 @@ class Server:
             updates = self.train_round(clients)
 
             # Aggregate the updates
-            aggregated_params = self.aggregate(updates, clients)
+            if self.FedSR !=True:
+                aggregated_params = self.aggregate(updates, clients)
+            else:
+                aggregated_params = self.aggregate_SR(updates, clients)
 
             # Update the server's model parameters
             self.model.load_state_dict(aggregated_params)

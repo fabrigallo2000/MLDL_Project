@@ -35,6 +35,8 @@ class Client:
         self.CMI_coeff=0.001
         self.optimizer=None
         self.flag=0
+        self.net=None
+        self.FedSR=True
 
     def __str__(self):
         return self.name
@@ -88,7 +90,7 @@ class Client:
         :param optimizer: optimizer used for the local training
         """
         
-        if FedSR:
+        if self.FedSR:
             #par,acc,loss,model=compute_loss(self.model,self.criterion, optimizer, self.train_loader,self.device,param=self.par)
             #self.model=copy.deepcopy(model)
             #self.optimizer=copy.deepcopy(par[3])
@@ -97,11 +99,11 @@ class Client:
             #def compute_loss(model,criterion, optim, dataset,device,lr=0.001, num_classes=62, z_dim=31,L2R_coeff=0.01,CMI_coeff=0.001,param=[]):
           
           self.cls.to(self.device)
-          self.cls_med.to(self.device)
-          self.model = nn.Sequential(self.model,self.cls_med,self.cls)
-          self.model.to(self.device)
+          #self.cls_med.to(self.device)
+          self.net = nn.Sequential(self.model,self.cls)
+          self.net.to(self.device)
           self.model.train()
-
+          self.optimizer = optim.SGD(self.net.parameters(), lr=0.001, momentum=0.9)
           total_loss = 0
           total_regL2R = 0
           total_regCMI = 0
@@ -122,17 +124,17 @@ class Client:
           for x, y in self.train_loader:
               x, y = x.to(self.device), y.to(self.device)
 
-              z, (z_mu, z_sigma) = featurize(self.model,x)
+              z, (z_mu, z_sigma) = featurize(self.net,x)
               logits = self.cls(z)
               
-              loss = self.criterion(logits, y) #qua è il punto cruciale
+              loss = F.cross_entropy(logits, y) #qua è il punto cruciale
 
               obj = loss
               regL2R = torch.zeros_like(obj)
               regCMI = torch.zeros_like(obj)
               regNegEnt = torch.zeros_like(obj)
               
-              flag=0
+              
               if self.L2R_coeff != 0.0:
                   regL2R = z.norm(dim=1).mean()
                   obj = obj + self.L2R_coeff * regL2R
@@ -140,7 +142,7 @@ class Client:
               if self.CMI_coeff != 0.0:
                   
                   r_sigma_softplus = F.softplus(self.r_sigma)
-                  flag=1
+                  
                 
                   r_mu_loc = self.r_mu[y]
                   r_sigma_loc = r_sigma_softplus[y]
@@ -170,7 +172,7 @@ class Client:
               #total_regNegEnt += regNegEnt.item() * batch_size
               total_samples += y.size(0)
               _, prediction = torch.max(logits.data, 1)
-              correct += (prediction == y).sum().item()
+              correct += (logits.argmax(1)== y).sum().item()
 
           loss_avg = total_loss / total_samples
           #regL2R_avg = total_regL2R / total_samples
@@ -224,16 +226,22 @@ class Client:
         #n_samples = len(self.train_loader.dataset) #esce spesso un errore, capire come risolvere nel caso
         #local_model = copy.deepcopy(self.model) #state dict tira fuori il dizionario: non ha utilità ma salvare il locale si 
 
-        self.optimizer = optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9) #da vedere se salvare il locale da modificare poi per fare tuning
+         #da vedere se salvare il locale da modificare poi per fare tuning
         #self.optimizer=self.optimizer.to(device)
         self.model=self.model.to(self.device)
+        
         if POC:
             for epoch in range(self.args.num_epochs):
+                self.optimizer = optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
                 loss = self.run_epoch_POC(epoch, self.optimizer,15)
                 return loss
         else:
             for epoch in range(self.args.num_epochs):
-                _, loss,accuracy  = self.run_epoch(epoch, self.optimizer)
+                if self.FedSR:
+                    _, loss,accuracy  = self.run_epoch(epoch)
+                else:
+                    self.optimizer = optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
+                    _, loss,accuracy  = self.run_epoch(epoch)
                 print(f'Client {self.name}, Epoch [{epoch + 1}/{self.args.num_epochs}], Loss: {loss:.4f}, Accuracy: {accuracy:.5f}')
 
         return 'done'

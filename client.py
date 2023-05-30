@@ -238,10 +238,10 @@ class Client:
         else:
             for epoch in range(self.args.num_epochs):
                 if self.FedSR:
-                    _, loss,accuracy  = self.run_epoch(epoch)
+                    _, loss,accuracy  = self.run_epoch(epoch, self.optimizer)
                 else:
                     self.optimizer = optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
-                    _, loss,accuracy  = self.run_epoch(epoch)
+                    _, loss,accuracy  = self.run_epoch(epoch, self.optimizer)
                 print(f'Client {self.name}, Epoch [{epoch + 1}/{self.args.num_epochs}], Loss: {loss:.4f}, Accuracy: {accuracy:.5f}')
 
         return 'done'

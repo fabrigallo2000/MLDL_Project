@@ -77,7 +77,7 @@ class Server:
         for  i,c in enumerate(clients):
             
             # train the client 
-            
+            c.init_model(self.model)
             #c.model.load_state_dict(self.model_params_dict)
             #MODIFICARE PER RICEVERE PARAMETRI DEL MODELLO ESTESO DI FEDSR
             c.model.load_state_dict(copy.deepcopy(self.model.state_dict()))
@@ -91,6 +91,10 @@ class Server:
 
             # Compute the difference between the current and updated parameters
             updates.append(OrderedDict({key: updated_params[key] - self.model_params_dict[key] for key in updated_params}))
+            
+            # libera la memoria dalla copia del modello fatta dal client
+            c.kill_model()
+            
 
         return updates
 

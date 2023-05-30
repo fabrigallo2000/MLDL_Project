@@ -15,7 +15,8 @@ class Client:
         self.dataset = dataset
         # da decommentare quando usi femnist
         self.name = self.dataset.client_name
-        self.model = copy.deepcopy(model)
+        # colpevole di saturare la ram in niid!
+        # self.model = copy.deepcopy(model)
         self.train_loader = DataLoader(self.dataset, batch_size=self.args.bs, shuffle=True, drop_last=True) \
             if not test_client else None
         self.test_loader = DataLoader(self.dataset, batch_size=1, shuffle=False)
@@ -40,6 +41,17 @@ class Client:
 
     def __str__(self):
         return self.name
+    
+    def init_model(self, model):
+        # solo qunado serve usare il modello dei client
+        self.model=copy.deepcopy(model)
+        return
+
+    def kill_model(self):
+        #cancella il modello locale-->libera la memoria
+        del self.model
+        return
+
 
     @staticmethod
     def update_metric(metric, outputs, labels):

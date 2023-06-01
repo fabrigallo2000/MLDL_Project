@@ -91,7 +91,8 @@ class Server:
                 updated_params = c.model.state_dict()
 
             # Compute the difference between the current and updated parameters
-            updates.append(OrderedDict({key: updated_params[key] for key in updated_params}))
+            # senza '- self.model_params_dict[key] ' l'accuracy diminuisce ad ogni round invece di aumentare
+            updates.append(OrderedDict({key: updated_params[key] - self.model_params_dict[key] for key in updated_params}))
             
             # libera la memoria dalla copia del modello fatta dal client
             

@@ -74,10 +74,6 @@ def get_transforms(args,angle=None):
             nptr.ToTensor(),
             nptr.Normalize((0.5,), (0.5,)), 
         ])
-    elif args.model=='cnn' and angle != None:
-        train_transforms = nptr.Compose([nptr.ToPILImage(),  # Converte il tensore in immagine PIL
-         nptr.Rotate(angle),  # Applica la rotazione
-         nptr.ToTensor()])
         
 
 
@@ -134,10 +130,22 @@ def get_datasets(args):
 
         train_datasets, test_datasets = [], []
         
+        angle = 0
         for user, data in train_data.items():
-            train_datasets.append(Femnist(data, train_transforms, user))
+            if args.loo & args.rotate:
+                angles = [0, 15, 30, 45, 75] # impostare 5 angoli per il training
+                angle = np.random.choice(angles)
+            elif not args.loo & args.rotate:
+                angles = [0, 15, 30, 45, 60, 75] # impostare 5 angoli per il training
+                angle = np.random.choice(angles)
+            train_datasets.append(Femnist(data, train_transforms, user, angle))
         for user, data in test_data.items():
-            test_datasets.append(Femnist(data, test_transforms, user))
+            if args.loo & args.rotate:
+                angle = 60
+            elif not args.loo & args.rotate:
+                angles = [0, 15, 30, 45, 60, 75] # impostare 5 angoli per il training
+                angle = np.random.choice(angles)
+            test_datasets.append(Femnist(data, test_transforms, user, angle))
 
     else:
         raise NotImplementedError
@@ -163,7 +171,7 @@ def set_metrics(args):
     return metrics
 
 
-def gen_clients(args, train_datasets, test_datasets, model,rotate=True): # impostare o meno la rotazione qui
+def gen_clients(args, train_datasets, test_datasets, model,rotate=True, cls=None, net_model=None): # impostare o meno la rotazione qui
     clients = [[], []]
     for i, datasets in enumerate([train_datasets, test_datasets]):
         angle=None
@@ -171,20 +179,7 @@ def gen_clients(args, train_datasets, test_datasets, model,rotate=True): # impos
             if rotate:
                 angles = [0, 15, 30, 45, 60, 75]
                 angle = np.random.choice(angles)
-            clients[i].append(Client(args, ds, model,get_transforms(args,angle),test_client=i == 1)) # qua,se si decide di ruotare l'angolo avviene in modo casuale
-    return clients[0], clients[1]
-
-def gen_clients_LOO(args, train_datasets, test_datasets, model,rotate=True): # impostare o meno la rotazione qui
-    clients = [[], []]
-    for i, datasets in enumerate([train_datasets, test_datasets]):
-        angle=None
-        for ds in datasets:
-            if rotate and i==0:
-                angles = [0, 15, 30, 45, 75] # impostare 5 angoli per il training
-                angle = np.random.choice(angles)
-            elif rotate and i==1:
-                angle=60
-            clients[i].append(Client(args, ds, model,get_transforms(args,angle),test_client=i == 1))
+            clients[i].append(Client(args, ds, model,get_transforms(args), cls, net_model, test_client=i == 1)) # qua,se si decide di ruotare l'angolo avviene in modo casuale
     return clients[0], clients[1]
 
 
@@ -192,10 +187,16 @@ def main():
     parser = get_parser()
     args = parser.parse_args()
     set_seed(args.seed)
-    rotate=True # per scegliere se far ruotare o meno (Punto 5)
-    rotate_LOO=True # per decidere se far ruotare con leave-one-domain-out
     print(f'Initializing model...')
-    model = model_init(args)
+    if args.fedSR:
+        model = model_init(args)
+        cls = nn.Linear(args.z_dim, get_dataset_num_classes(args.dataset))
+        net_model= nn.Linear(model, cls)
+        net_model.cuda()
+        cls.cuda()
+    else:
+        model = model_init(args)
+
     model.cuda()
     print('Done.')
 
@@ -204,10 +205,12 @@ def main():
     print('Done.')
 
     metrics = set_metrics(args)
-    if rotate_LOO==False:
-        train_clients, test_clients = gen_clients(args, train_datasets, test_datasets, model,rotate)
-    else :
-        train_clients, test_clients = gen_clients_LOO(args, train_datasets, test_datasets, model,rotate)
+
+    if args.fedSR:
+        train_clients, test_clients = gen_clients(args, train_datasets, test_datasets, model,args.rotate, cls, net_model)
+    else:
+        train_clients, test_clients = gen_clients(args, train_datasets, test_datasets, model,args.rotate)
+
     server = Server(args, train_clients, test_clients, model, metrics,True) #quando c'è true fa la POC
     server.train()
 

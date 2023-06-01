@@ -563,3 +563,7 @@ class Compose(transforms.Compose):
 
 class Normalize(transforms.Normalize):
     pass
+
+
+class Rotate(transforms.Rotate):
+    pass

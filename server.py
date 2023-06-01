@@ -74,26 +74,26 @@ class Server:
         :return: model updates gathered from the clients, to be aggregated
         """
         updates = []
+        server_state_dict = copy.deepcopy(self.model.state_dict())
         for  i,c in enumerate(clients):
             
             # train the client 
-            c.init_model(self.model)
+            
             #c.model.load_state_dict(self.model_params_dict)
             #MODIFICARE PER RICEVERE PARAMETRI DEL MODELLO ESTESO DI FEDSR
-            c.model.load_state_dict(copy.deepcopy(self.model.state_dict()))
+            c.model.load_state_dict(server_state_dict)
             c.train(False)
                 
             # Get the updated model's parameters
             if self.FedSR:
-                updated_params = copy.deepcopy(c.net.state_dict())
+                updated_params = c.net.state_dict()
             else:
-                updated_params = copy.deepcopy(c.model.state_dict())
+                updated_params = c.model.state_dict()
 
             # Compute the difference between the current and updated parameters
-            updates.append(OrderedDict({key: updated_params[key] - self.model_params_dict[key] for key in updated_params}))
+            updates.append(OrderedDict({key: updated_params[key] for key in updated_params}))
             
             # libera la memoria dalla copia del modello fatta dal client
-            c.kill_model()
             
 
         return updates

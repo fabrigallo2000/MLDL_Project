@@ -2,22 +2,22 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # Apertura del primo file CSV
-df1 = pd.read_csv('loss_1epoch_5clientPerRound_25r_IID.csv')
+df1 = pd.read_csv('accuracy_1epoch_5clientPerRound_25r_NIID.csv')
 
 # Creazione del grafico
 plt.plot(df1['x_round'], df1['y'], label='1 epoch')
 
-df2 = pd.read_csv('loss_5epoch_5clientPerRound_25r_IID.csv')
+df2 = pd.read_csv('accuracy_5epoch_5clientPerRound_25r_NIID.csv')
 plt.plot(df2['x_round'], df2['y'], label='5 epochs')
 
-df3 = pd.read_csv('loss_10epoch_5clientPerRound_25r_IID.csv')
+df3 = pd.read_csv('accuracy_10epoch_5clientPerRound_25r_NIID.csv')
 plt.plot(df3['x_round'], df3['y'], label='10 epochs')
 
 # Personalizzazione del grafico
 plt.xlabel('Round')
-plt.ylabel('Loss')
+plt.ylabel('Acauracy')
 plt.grid(True)
-plt.title('Loss: 25 round, 5 clients per round, IID')
+plt.title('Accuracy: 25 round, 5 clients per round, NIID')
 plt.legend()
 
 

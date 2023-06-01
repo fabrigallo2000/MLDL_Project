@@ -10,13 +10,13 @@ from utils.utils import HardNegativeMining, MeanReduction
 
 class Client:
 
-    def __init__(self, args, dataset, model, transformation=None,test_client=False):
+    def __init__(self, args, dataset, model, transformation=None, cls=None, net_model=None, test_client=False):
         self.args = args
         self.dataset = dataset
         # da decommentare quando usi femnist
         self.name = self.dataset.client_name
         # colpevole di saturare la ram in niid!
-        # self.model = copy.deepcopy(model)
+        self.model = model
         self.train_loader = DataLoader(self.dataset, batch_size=self.args.bs, shuffle=True, drop_last=True) \
             if not test_client else None
         self.test_loader = DataLoader(self.dataset, batch_size=1, shuffle=False)
@@ -28,7 +28,6 @@ class Client:
         num_classes=62
         z_dim=31
         self.cls=nn.Linear(31,62)
-        self.cls_med=nn.Linear(62,31)
         self.r_mu = nn.Parameter(torch.zeros(num_classes,z_dim))
         self.r_sigma = nn.Parameter(torch.ones(num_classes,z_dim))
         self.C = nn.Parameter(torch.ones([]))

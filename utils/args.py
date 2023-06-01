@@ -20,4 +20,9 @@ def get_parser():
     parser.add_argument('--print_test_interval', type=int, default=10, help='client print test interval')
     parser.add_argument('--eval_interval', type=int, default=10, help='eval interval')
     parser.add_argument('--test_interval', type=int, default=10, help='test interval')
+    parser.add_argument('--rotate', action='store_true', default=False)
+    parser.add_argument('--fedSR', action='store_true', default=False)
+    parser.add_argument('--z_dim', type=int, default=512)
+    parser.add_argument('--loo', action='store_true', default=False)
+
     return parser

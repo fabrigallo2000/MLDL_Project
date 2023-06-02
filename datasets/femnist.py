@@ -22,15 +22,15 @@ class Femnist(Dataset):
         # self.samples è lista di tuple [([pixel immagine], label), ()]
         self.transform = transform
         self.client_name = client_name
-        self.transform = nptr.Compose([self.transfrom, nptr.Rotate(angle)])
+        self.transform = nptr.Compose([self.transform, nptr.Rotate(angle)])
 
 
     def __getitem__(self, index: int) -> Any:
         # chiamata da torch, torna immagine e label corrispondenti all'indice
         image, label = self.samples[index]
-        numpy_img = np.array(image)
+        numpy_img = np.array(image).reshape(28, 28, 1)
         transformed_img = self.transform(numpy_img)
-        return transformed_img.reshape(1, 28, 28), label
+        return transformed_img, label
 
     def __len__(self) -> int:
         return len(self.samples)

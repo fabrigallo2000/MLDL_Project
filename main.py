@@ -53,9 +53,9 @@ def model_init(args):
     raise NotImplementedError
 
 
-def get_transforms(args,angle=None):
+def get_transforms(args,angle=0):
     # TODO: test your data augmentation by changing the transforms here!
-    if args.model == 'deeplabv3_mobilenetv2' and angle == None:
+    if args.model == 'deeplabv3_mobilenetv2' and angle == 0:
         train_transforms = sstr.Compose([
             sstr.RandomResizedCrop((512, 928), scale=(0.5, 2.0)),
             sstr.ToTensor(),
@@ -65,7 +65,7 @@ def get_transforms(args,angle=None):
             sstr.ToTensor(),
             sstr.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ])
-    elif args.model == 'cnn' or args.model == 'resnet18' and angle == None:
+    elif args.model == 'cnn' or args.model == 'resnet18' and angle == 0:
         train_transforms = nptr.Compose([
             nptr.ToTensor(),
             nptr.Normalize((0.5,), (0.5,)),
@@ -174,7 +174,7 @@ def set_metrics(args):
 def gen_clients(args, train_datasets, test_datasets, model,rotate=True, cls=None, net_model=None): # impostare o meno la rotazione qui
     clients = [[], []]
     for i, datasets in enumerate([train_datasets, test_datasets]):
-        angle=None
+        angle=0
         for ds in datasets:
             if rotate:
                 angles = [0, 15, 30, 45, 60, 75]

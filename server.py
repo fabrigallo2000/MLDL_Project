@@ -21,8 +21,8 @@ class Server:
             'prob_30_clients': 0.0001
         }
         self.POC= POC
-        self.FedSR=True
 
+        
     def select_clients(self):
         num_clients = min(self.args.clients_per_round, len(self.train_clients))
         return np.random.choice(self.train_clients, num_clients, replace=False)
@@ -85,7 +85,7 @@ class Server:
             c.train(False)
                 
             # Get the updated model's parameters
-            if self.FedSR:
+            if self.args.fedSR:
                 updated_params = c.net.state_dict()
             else:
                 updated_params = c.model.state_dict()
@@ -145,7 +145,7 @@ class Server:
             updates = self.train_round(clients)
 
             # Aggregate the updates
-            if self.FedSR !=True:
+            if self.args.fedSR !=True:
                 aggregated_params = self.aggregate(updates, clients)
             else:
                 aggregated_params = self.aggregate_SR(updates, clients)

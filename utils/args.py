@@ -24,5 +24,7 @@ def get_parser():
     parser.add_argument('--fedSR', action='store_true', default=False)
     parser.add_argument('--z_dim', type=int, default=512)
     parser.add_argument('--loo', action='store_true', default=False)
+    parser.add_argument('--POC', type=int, choices=[0, 10, 30], default=0)
 
+    
     return parser

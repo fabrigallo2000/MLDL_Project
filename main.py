@@ -179,7 +179,7 @@ def gen_clients(args, train_datasets, test_datasets, model,rotate=True, cls=None
             if rotate:
                 angles = [0, 15, 30, 45, 60, 75]
                 angle = np.random.choice(angles)
-            clients[i].append(Client(args, ds, model,get_transforms(args), cls, net_model, test_client=i == 1)) # qua,se si decide di ruotare l'angolo avviene in modo casuale
+            clients[i].append(Client(args, ds, model, cls, net_model, test_client=i == 1)) # qua,se si decide di ruotare l'angolo avviene in modo casuale
     return clients[0], clients[1]
 
 
@@ -187,6 +187,10 @@ def main():
     parser = get_parser()
     args = parser.parse_args()
     set_seed(args.seed)
+    if args.POC!=0 & args.niid!=True:
+        print('POC can only be done on NIID, IID setting has too few clients\n generates division by zero\n switching to NIID')
+        args.niid=True
+        print('Now in NIID setting')
     print(f'Initializing model...')
     if args.fedSR:
         model = model_init(args)
@@ -211,7 +215,7 @@ def main():
     else:
         train_clients, test_clients = gen_clients(args, train_datasets, test_datasets, model,args.rotate)
 
-    server = Server(args, train_clients, test_clients, model, metrics,True) #quando c'è true fa la POC
+    server = Server(args, train_clients, test_clients, model, metrics,args.POC) #quando c'è true fa la POC
     server.train()
 
 

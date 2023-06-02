@@ -10,7 +10,7 @@ from utils.utils import HardNegativeMining, MeanReduction
 
 class Client:
 
-    def __init__(self, args, dataset, model, transformation=None, cls=None, net_model=None, test_client=False):
+    def __init__(self, args, dataset, model, cls=None, net_model=None, test_client=False):
         self.args = args
         self.dataset = dataset
         # da decommentare quando usi femnist
@@ -36,7 +36,6 @@ class Client:
         self.optimizer=None
         self.flag=0
         self.net=None
-        self.FedSR=True
 
     def __str__(self):
         return self.name
@@ -101,7 +100,7 @@ class Client:
         :param optimizer: optimizer used for the local training
         """
         
-        if self.FedSR:
+        if self.args.fedSR:
             #par,acc,loss,model=compute_loss(self.model,self.criterion, optimizer, self.train_loader,self.device,param=self.par)
             #self.model=copy.deepcopy(model)
             #self.optimizer=copy.deepcopy(par[3])
@@ -248,7 +247,7 @@ class Client:
                 return loss
         else:
             for epoch in range(self.args.num_epochs):
-                if self.FedSR:
+                if self.args.fedSR:
                     _, loss,accuracy  = self.run_epoch(epoch, self.optimizer)
                 else:
                     self.optimizer = optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)

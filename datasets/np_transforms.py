@@ -565,5 +565,9 @@ class Normalize(transforms.Normalize):
     pass
 
 
-class Rotate(transforms.Rotate):
-    pass
+class Rotate:
+    def __init__(self, angle):
+        self.angle = angle
+
+    def __call__(self, img):
+        return transforms.functional.rotate(img, self.angle)

@@ -28,8 +28,9 @@ class Femnist(Dataset):
     def __getitem__(self, index: int) -> Any:
         # chiamata da torch, torna immagine e label corrispondenti all'indice
         image, label = self.samples[index]
-        tensor_img = self.transform(image)
-        return tensor_img.reshape(1, 28, 28), label
+        numpy_img = np.array(image)
+        transformed_img = self.transform(numpy_img)
+        return transformed_img.reshape(1, 28, 28), label
 
     def __len__(self) -> int:
         return len(self.samples)

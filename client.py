@@ -72,7 +72,7 @@ class Client:
         else:
             raise NotImplementedError
         
-    def run_epoch_POC(self, cur_epoch, optimizer, num_batches):
+    def run_epoch_POC(self, cur_epoch, num_batches):
     
         self.model.train()
         total_loss = 0
@@ -93,7 +93,7 @@ class Client:
         average_loss = total_loss / num_batches
         return average_loss
 
-    def run_epoch(self, cur_epoch, optimizer,FedSR=True):
+    def run_epoch(self, cur_epoch):
         """
         This method locally trains the model with the dataset of the client. It handles the training at mini-batch level
         :param cur_epoch: current epoch of training
@@ -210,7 +210,7 @@ class Client:
                 #loss = self.reduction(outputs, labels)
                 loss= self.criterion(outputs,labels)
                 loss.backward()
-                optimizer.step()
+                self.optimizer.step()
                 total_loss += loss.item()
                 #print('this are putputs',outputs)
                 #self.update_metric(total_metric, outputs, labels)
@@ -227,7 +227,7 @@ class Client:
             return len(self.train_loader),train_loss,train_acc
     
 
-    def train(self,POC):
+    def train(self):
         """
         This method locally trains the model with the dataset of the client. It handles the training at epochs level
         (by calling the run_epoch method for each local epoch of training)
@@ -240,21 +240,16 @@ class Client:
         #self.optimizer=self.optimizer.to(device)
         self.model=self.model.to(self.device)
         
-        if POC:
-            for epoch in range(self.args.num_epochs):
+        
+        for epoch in range(self.args.num_epochs):
+            if self.args.fedSR:
+                _, loss,accuracy  = self.run_epoch(epoch)
+            else:
                 self.optimizer = optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
-                loss = self.run_epoch_POC(epoch, self.optimizer,15)
-                return loss
-        else:
-            for epoch in range(self.args.num_epochs):
-                if self.args.fedSR:
-                    _, loss,accuracy  = self.run_epoch(epoch, self.optimizer)
-                else:
-                    self.optimizer = optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
-                    _, loss,accuracy  = self.run_epoch(epoch, self.optimizer)
-                print(f'Client {self.name}, Epoch [{epoch + 1}/{self.args.num_epochs}], Loss: {loss:.4f}, Accuracy: {accuracy:.5f}')
+                _, loss,accuracy  = self.run_epoch(epoch)
+            print(f'Client {self.name}, Epoch [{epoch + 1}/{self.args.num_epochs}], Loss: {loss:.4f}, Accuracy: {accuracy:.5f}')
 
-        return 'done'
+        return loss
 
     def test(self, metric):
         """

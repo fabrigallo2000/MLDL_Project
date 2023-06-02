@@ -8,7 +8,7 @@ import torch
 
 
 class Server:
-    def __init__(self, args, train_clients, test_clients, model, metrics,POC=False):
+    def __init__(self, args, train_clients, test_clients, model, metrics):
         self.args = args
         self.train_clients = train_clients
         self.test_clients = test_clients
@@ -20,9 +20,8 @@ class Server:
             'prob_10_clients': 0.5,
             'prob_30_clients': 0.0001
         }
-        self.POC= POC
+        self.clients_loss= {}
 
-        
     def select_clients(self):
         num_clients = min(self.args.clients_per_round, len(self.train_clients))
         return np.random.choice(self.train_clients, num_clients, replace=False)
@@ -47,25 +46,19 @@ class Server:
 
         self.client_probs=client_probs
 
-    def get_clients_with_highest_losses(self,clients, d):
-        sorted_clients = sorted(clients.items(), key=lambda x: x[1], reverse=True)
+    def get_clients_with_highest_losses(self, d):
+        sorted_clients = sorted(self.clients_loss.items(), key=lambda x: x[1], reverse=True)
         top_clients = sorted_clients[:d]
         return top_clients
 
     def smart_select_clients(self):
-        #punto 1 pag 7, probability=10 genera 10% di utenti che complessivamente ha 50% di probabilità dei essere scelto
-        # se probability = 30 genera il 30% di utenti che complessivamente ha lo 0.01% di prob di esere scelto
-        probability= 10
-        self.generate_probs(probability)
+        #DA CAMBIARE
+        self.generate_probs(10)
 
         num_clients = self.args.clients_per_round
-        clients = {}
         selected_clients = np.random.choice(self.train_clients, num_clients, replace=False, p=self.client_probs)
-        for client in selected_clients:
-            loss = client.train(True)
-            clients[client] = abs(loss)
         
-        return self.get_clients_with_highest_losses(clients,int(0.4*num_clients))
+        return self.get_clients_with_highest_losses(int(0.4*num_clients))
 
     def train_round(self, clients, POC=False):
         """
@@ -82,8 +75,14 @@ class Server:
             #c.model.load_state_dict(self.model_params_dict)
             #MODIFICARE PER RICEVERE PARAMETRI DEL MODELLO ESTESO DI FEDSR
             c.model.load_state_dict(server_state_dict)
-            c.train(False)
-                
+            # client fa il train uguale in goni caso e trona la loss dell'ultima epoch
+            # se è poc salva la loss nel dizionario (spostato in self), sennò non fa nulla del valore ritornato e continua
+            if self.args.POC:
+                loss = c.train()
+                self.clients_loss[c] = abs(loss)
+            else:
+                c.train()
+
             # Get the updated model's parameters
             if self.args.fedSR:
                 updated_params = c.net.state_dict()
@@ -135,7 +134,7 @@ class Server:
 
         for r in range(self.args.num_rounds):
             # Select clients for this round
-            if self.POC:
+            if self.args.POC:
                 clients = self.smart_select_clients()
                 clients = [client[0] for client in clients]
 

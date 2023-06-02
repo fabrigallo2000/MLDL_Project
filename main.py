@@ -187,7 +187,7 @@ def main():
     parser = get_parser()
     args = parser.parse_args()
     set_seed(args.seed)
-    if args.POC!=0 & args.niid!=True:
+    if args.POC & args.niid!=True:
         print('POC can only be done on NIID, IID setting has too few clients\n generates division by zero\n switching to NIID')
         args.niid=True
         print('Now in NIID setting')
@@ -215,7 +215,7 @@ def main():
     else:
         train_clients, test_clients = gen_clients(args, train_datasets, test_datasets, model,args.rotate)
 
-    server = Server(args, train_clients, test_clients, model, metrics,args.POC) #quando c'è true fa la POC
+    server = Server(args, train_clients, test_clients, model, metrics)
     server.train()
 
 

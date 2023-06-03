@@ -132,17 +132,17 @@ def get_datasets(args):
         
         angle = 0
         for user, data in train_data.items():
-            if args.loo & args.rotate:
+            if args.loo and args.rotate:
                 angles = [0, 15, 30, 45, 75] # impostare 5 angoli per il training
                 angle = np.random.choice(angles)
-            elif not args.loo & args.rotate:
+            elif not args.loo and args.rotate:
                 angles = [0, 15, 30, 45, 60, 75] # impostare 5 angoli per il training
                 angle = np.random.choice(angles)
             train_datasets.append(Femnist(data, train_transforms, user, angle))
         for user, data in test_data.items():
-            if args.loo & args.rotate:
+            if args.loo and args.rotate:
                 angle = 60
-            elif not args.loo & args.rotate:
+            elif not args.loo and args.rotate:
                 angles = [0, 15, 30, 45, 60, 75] # impostare 5 angoli per il training
                 angle = np.random.choice(angles)
             test_datasets.append(Femnist(data, test_transforms, user, angle))
@@ -187,11 +187,14 @@ def main():
     parser = get_parser()
     args = parser.parse_args()
     set_seed(args.seed)
-    if args.POC & args.niid!=True:
+
+    #controlla che POC avvenga in NIID
+    if args.POC and args.niid!=True:
         print('POC can only be done on NIID, IID setting has too few clients\n generates division by zero\n switching to NIID')
         args.niid=True
         print('Now in NIID setting')
     print(f'Initializing model...')
+    
     if args.fedSR:
         model = model_init(args)
         cls = nn.Linear(args.z_dim, get_dataset_num_classes(args.dataset))

@@ -21,6 +21,9 @@ class Server:
             'prob_30_clients': 0.0001
         }
         self.clients_loss= {}
+        for c in train_clients:
+          self.clients_loss[c] = 4
+        
 
     def select_clients(self):
         num_clients = min(self.args.clients_per_round, len(self.train_clients))
@@ -52,15 +55,17 @@ class Server:
         return top_clients
 
     def smart_select_clients(self):
-        #DA CAMBIARE
-        self.generate_probs(10)
+        #tra tutti i clients(inizializzati tutti con loss=4(valore arbitrario alto)
+        # ne seleziona num_clients_per_round con la losso più alta
 
-        num_clients = self.args.clients_per_round
-        selected_clients = np.random.choice(self.train_clients, num_clients, replace=False, p=self.client_probs)
-        
-        return self.get_clients_with_highest_losses(int(0.4*num_clients))
+        num_clients = min(self.args.clients_per_round, len(self.train_clients))
+        #selected_clients = np.random.choice(self.train_clients, num_clients, replace=False, p=self.client_probs)
+        top_clients = self.get_clients_with_highest_losses(num_clients)
+        top_clients= [client[0] for client in top_clients]
 
-    def train_round(self, clients, POC=False):
+        return top_clients
+
+    def train_round(self, clients):
         """
         This method trains the model with the dataset of the clients. It handles the training at single round level.
         :param clients: list of all the clients to train
@@ -136,18 +141,17 @@ class Server:
             # Select clients for this round
             if self.args.POC:
                 clients = self.smart_select_clients()
-                clients = [client[0] for client in clients]
-
             else :
                 clients= self.select_clients()
+
             # Train clients and gather updates
             updates = self.train_round(clients)
 
             # Aggregate the updates
-            if self.args.fedSR !=True:
-                aggregated_params = self.aggregate(updates, clients)
-            else:
+            if self.args.fedSR:
                 aggregated_params = self.aggregate_SR(updates, clients)
+            else:
+                aggregated_params = self.aggregate(updates, clients)
 
             # Update the server's model parameters
             self.model.load_state_dict(aggregated_params)

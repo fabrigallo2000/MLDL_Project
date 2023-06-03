@@ -72,7 +72,7 @@ class Client:
         else:
             raise NotImplementedError
         
-    def run_epoch_POC(self, cur_epoch, num_batches):
+    '''def run_epoch_POC(self, cur_epoch, num_batches):
     
         self.model.train()
         total_loss = 0
@@ -91,7 +91,7 @@ class Client:
                 break
 
         average_loss = total_loss / num_batches
-        return average_loss
+        return average_loss'''
 
     def run_epoch(self, cur_epoch):
         """
@@ -201,16 +201,17 @@ class Client:
 
             for cur_step, (images, labels) in enumerate(self.train_loader):
                 self.optimizer.zero_grad()
+
                 images = images.to(self.device)  # Move images to the same device as model and labels
                 labels = labels.to(self.device)
+
                 outputs = self._get_outputs(images)
-                # self.reduction è MeanReduction,
-                # fa solo una media dei valori di outputs, non guarda nemmeno le labels!
-                # va bene come loss?
-                #loss = self.reduction(outputs, labels)
+                
                 loss= self.criterion(outputs,labels)
+
                 loss.backward()
                 self.optimizer.step()
+
                 total_loss += loss.item()
                 #print('this are putputs',outputs)
                 #self.update_metric(total_metric, outputs, labels)
@@ -268,7 +269,7 @@ class Client:
         # self.model.train()  # Riporta il modello in modalità di addestramento
 
     def get_len(self):
-            return len(self.train_loader)
+        return len(self.train_loader)
 
 '''import copy
 import torch

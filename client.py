@@ -26,8 +26,8 @@ class Client:
         self.loss_POC = 0
         self.par=[]
         num_classes=62
-        z_dim=31
-        self.cls=nn.Linear(31,62)
+        z_dim=512
+        self.cls=nn.Linear(512,62)
         self.r_mu = nn.Parameter(torch.zeros(num_classes,z_dim))
         self.r_sigma = nn.Parameter(torch.ones(num_classes,z_dim))
         self.C = nn.Parameter(torch.ones([]))

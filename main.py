@@ -198,6 +198,7 @@ def main():
     if args.fedSR:
         model = model_init(args)
         cls = nn.Linear(args.z_dim, get_dataset_num_classes(args.dataset))
+        model.fc2= nn.Linear(model.fc2.in_features,args.z_dim*2)
         net_model= nn.Linear(model, cls)
         net_model.cuda()
         cls.cuda()

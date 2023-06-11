@@ -114,6 +114,10 @@ class Server:
         # Apply the weighted average update to the server's model parameters
             aggregated_params[key] = self.model_params_dict[key] + param_sum
 
+        # da mettere un if: se c'è FedSR l'aggregation è da fare anche su cls non solo sul modello
+        # oppure direttamente una volta creto il layer in piu si passa solo quel modello e ogni volta il client nella parte fedsr 
+        # tira fuori l'ultimo layer per fare la domain generalization
+
         return aggregated_params
     def aggregate_SR(self, updates, clients):
     

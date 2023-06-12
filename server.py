@@ -89,10 +89,11 @@ class Server:
                 c.train()
 
             # Get the updated model's parameters
-            if self.args.fedSR:
-                updated_params = c.net.state_dict()
-            else:
-                updated_params = c.model.state_dict()
+            #if self.args.fedSR:
+            #    updated_params = c.net.state_dict()
+            #else:
+            #    updated_params = c.model.state_dict()
+            updated_params=c.model.state_dict()
 
             # Compute the difference between the current and updated parameters
             # senza '- self.model_params_dict[key] ' l'accuracy diminuisce ad ogni round invece di aumentare
@@ -152,11 +153,11 @@ class Server:
             updates = self.train_round(clients)
 
             # Aggregate the updates
-            if self.args.fedSR:
-                aggregated_params = self.aggregate_SR(updates, clients)
-            else:
-                aggregated_params = self.aggregate(updates, clients)
-
+            #if self.args.fedSR:
+            #   aggregated_params = self.aggregate_SR(updates, clients)
+            #else:
+            #    aggregated_params = self.aggregate(updates, clients)
+            aggregated_params=self.aggregate(updates,clients)
             # Update the server's model parameters
             self.model.load_state_dict(aggregated_params)
 

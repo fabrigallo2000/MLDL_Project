@@ -27,7 +27,8 @@ class Client:
         self.par=[]
         num_classes=62
         z_dim=512
-        self.cls=nn.Linear(512,62)
+        #self.cls=nn.Linear(512,62)
+        self.cls=nn.Linear(args.z_dim,62)
         self.r_mu = nn.Parameter(torch.zeros(num_classes,z_dim))
         self.r_sigma = nn.Parameter(torch.ones(num_classes,z_dim))
         self.C = nn.Parameter(torch.ones([]))
@@ -108,9 +109,13 @@ class Client:
             #return par,acc,loss
             #def compute_loss(model,criterion, optim, dataset,device,lr=0.001, num_classes=62, z_dim=31,L2R_coeff=0.01,CMI_coeff=0.001,param=[]):
           
-          self.cls.to(self.device)
+          
+          self.cls=self.model[-1] # ho aggiunto cls dal modello grande al posto di passare due elementi ogni volta
+          self.cls.to(self.device) # vedere se serve passare cls passato da server o se serve passarlo nuovo ogni volta, bisogna PROVARE
           #self.cls_med.to(self.device)
-          self.net = nn.Sequential(self.model,self.cls)
+          #self.net = nn.Sequential(self.model,self.cls)
+          #self.net.to(self.device)
+          self.net=nn.Sequential(*self.model[:-1])
           self.net.to(self.device)
           self.model.train()
           self.optimizer = optim.SGD(self.net.parameters(), lr=0.001, momentum=0.9)
@@ -134,8 +139,8 @@ class Client:
           for x, y in self.train_loader:
               x, y = x.to(self.device), y.to(self.device)
 
-              z, (z_mu, z_sigma) = featurize(self.net,x)
-              logits = self.cls(z)
+              z, (z_mu, z_sigma) = featurize(self.model,x) #passare tutto il modello a featurize, non solo il net
+              logits = self.cls(z) 
               
               loss = F.cross_entropy(logits, y) #qua è il punto cruciale
 

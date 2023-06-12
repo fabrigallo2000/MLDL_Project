@@ -199,9 +199,11 @@ def main():
         model = model_init(args)
         cls = nn.Linear(args.z_dim, get_dataset_num_classes(args.dataset))
         model.fc2= nn.Linear(model.fc2.in_features,args.z_dim*2)
-        net_model= nn.Linear(model, cls)
-        net_model.cuda()
-        cls.cuda()
+        model= nn.Sequential(model, cls)
+        #net_model.cuda()
+
+        #cls.cuda()
+
     else:
         model = model_init(args)
 
@@ -215,7 +217,7 @@ def main():
     metrics = set_metrics(args)
 
     if args.fedSR:
-        train_clients, test_clients = gen_clients(args, train_datasets, test_datasets, model,args.rotate, cls, net_model)
+        train_clients, test_clients = gen_clients(args, train_datasets, test_datasets, model,args.rotate)# ho tolto per ora cls e net_model per passare tutto il modello al client e server che poi stacca da solo il cls
     else:
         train_clients, test_clients = gen_clients(args, train_datasets, test_datasets, model,args.rotate)
 

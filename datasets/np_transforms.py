@@ -571,3 +571,27 @@ class Rotate:
 
     def __call__(self, img):
         return transforms.functional.rotate(img, self.angle)
+    
+class SpecTran:
+    def __init__(self,dim=(-2,-1)):
+        self.dim=dim
+    def __call__(self,img):
+        return  torch.fft.fftshift(torch.fft.fft2(img, dim=(-2, -1)))
+    
+class StyleRem:
+    def __init__(self, ls):
+        self.ls = ls
+
+    def __call__(self, img_spectrum):
+        height, width = img_spectrum.shape[-2:]
+
+        window_width = self.ls
+        window_height = self.ls
+        top = (height - window_height) // 2
+        bottom = top + window_height
+        left = (width - window_width) // 2
+        right = left + window_width
+
+        img_spectrum[..., top:bottom, left:right] = 0
+        img_without_style = torch.fft.ifft2(torch.fft.ifftshift(img_spectrum), dim=(-2, -1)).real
+        return img_without_style

@@ -16,13 +16,16 @@ IMAGE_SIZE = 28
 
 class Femnist(Dataset):
 
-    def __init__(self, data: dict,transform: tr.Compose,client_name: str, angle):
+    def __init__(self, data: dict,transform: tr.Compose,client_name: str, angle,Spectre=False,ls=None):
         super().__init__()
         self.samples = [(image, label) for image, label in zip(data['x'], data['y'])]
         # self.samples è lista di tuple [([pixel immagine], label), ()]
         self.transform = transform
         self.client_name = client_name
-        self.transform = nptr.Compose([self.transform, nptr.Rotate(angle)])
+        if Spectre:
+            self.transform= nptr.Compose([self.transform, nptr.Rotate(angle),nptr.SpecTran(dim=(-2,-1)),nptr.StyleRem(ls)])
+        else:
+            self.transform = nptr.Compose([self.transform, nptr.Rotate(angle)])
 
 
     def __getitem__(self, index: int) -> Any:

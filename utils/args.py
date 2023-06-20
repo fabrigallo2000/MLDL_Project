@@ -25,6 +25,7 @@ def get_parser():
     parser.add_argument('--z_dim', type=int, default=512)
     parser.add_argument('--loo', action='store_true', default=False)
     parser.add_argument('--POC', action='store_true', default=False)
+    parser.add_argument('--SPEC',action='store_true',default=False)
 
     
     return parser

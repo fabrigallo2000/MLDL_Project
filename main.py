@@ -140,7 +140,7 @@ def get_datasets(args):
             elif not args.loo and args.rotate:
                 angles = [0, 15, 30, 45, 60, 75] # impostare 5 angoli per il training
                 angle = np.random.choice(angles)
-            if args.Spectre:
+            if args.SPEC:
                 Spectre=True
                 ls=10 # da provare per fare hyperparameter tuning
             train_datasets.append(Femnist(data, train_transforms, user, angle,Spectre,ls))
@@ -150,7 +150,7 @@ def get_datasets(args):
             elif not args.loo and args.rotate:
                 angles = [0, 15, 30, 45, 60, 75] # impostare 5 angoli per il training
                 angle = np.random.choice(angles)
-            if args.Spectre:
+            if args.SPEC:
                 Spectre=True
                 ls= 10 # da provare per fare hyperparameter tuning
             test_datasets.append(Femnist(data, test_transforms, user, angle,Spectre,ls))

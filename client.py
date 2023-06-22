@@ -139,7 +139,7 @@ class Client:
           for x, y in self.train_loader:
               x, y = x.to(self.device), y.to(self.device)
 
-              z, (z_mu, z_sigma) = featurize(self.model,x) #passare tutto il modello a featurize, non solo il net
+              z, (z_mu, z_sigma) = featurize(self.net,x,self.args.z_dim) #passare tutto il modello a featurize, non solo il net
               logits = self.cls(z) 
               
               loss = F.cross_entropy(logits, y) #qua è il punto cruciale
@@ -262,12 +262,22 @@ class Client:
         This method tests the model on the local dataset of the client.
         :param metric: StreamMetric object
         """
+        if self.args.fedSR:
+              self.cls=self.model[-1] # ho aggiunto cls dal modello grande al posto di passare due elementi ogni volta
+              self.cls.to(self.device)
+              self.net=nn.Sequential(*self.model[:-1])
+              self.net.to(self.device)
+
         self.model.eval()  # Imposta il modello in modalità di valutazione (non addestramento)
         with torch.no_grad():
             for i, (images, labels) in enumerate(self.test_loader):
                 images = images.cuda()
                 
-                outputs = self.model(images)  # Esegue l'inferenza sulle immagini
+                if self.args.fedSR:
+                      z, (z_mu, z_sigma) = featurize(self.net,images,self.args.z_dim) #passare tutto il modello a featurize, non solo il net
+                      outputs = self.cls(z)
+                else:
+                    outputs = self.model(images)  # Esegue l'inferenza sulle immagini
                 
                 self.update_metric(metric, outputs, labels)  # Aggiorna la metrica
                 

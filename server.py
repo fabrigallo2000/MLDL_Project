@@ -5,6 +5,8 @@ import pandas as pd
 
 import numpy as np
 import torch
+from torch import nn
+from FedSR_pers import featurize
 
 
 class Server:
@@ -23,6 +25,7 @@ class Server:
         self.clients_loss= {}
         for c in train_clients:
           self.clients_loss[c] = 4
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         
 
     def select_clients(self):
@@ -187,7 +190,11 @@ class Server:
 
         with torch.no_grad():
             # Set the model in evaluation mode
-
+            if self.args.fedSR:
+              self.cls=self.model[-1] # ho aggiunto cls dal modello grande al posto di passare due elementi ogni volta
+              self.cls.to(self.device)
+              self.net=nn.Sequential(*self.model[:-1])
+              self.net.to(self.device)
             self.model.eval()
 
             for client in self.train_clients:
@@ -211,7 +218,12 @@ class Server:
                     labels = target
                     inputs = inputs.cuda()
                     labels = labels.cuda()
-                    outputs = self.model(inputs)
+                    
+                    if self.args.fedSR:
+                      z, (z_mu, z_sigma) = featurize(self.net,inputs,self.args.z_dim) #passare tutto il modello a featurize, non solo il net
+                      outputs = self.cls(z)
+                    else:
+                      outputs = self.model(inputs)
 
                     loss = torch.nn.functional.cross_entropy(outputs, labels)
                     

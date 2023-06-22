@@ -6,7 +6,7 @@ import copy
 
 
 
-def featurize(model, x, probabilistic=True, z_dim=31):
+def featurize(model, x, probabilistic=True, z_dim=512):
     if not probabilistic:
         return model(x)
     else:

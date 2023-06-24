@@ -195,7 +195,7 @@ class Client:
           #regNegEnt_avg = total_regNegEnt / total_samples
           acc=correct/total_samples
 
-          return 'roba',acc, loss_avg
+          return 'roba', loss_avg, acc
         else:
             self.model.train()
             total_loss = 0

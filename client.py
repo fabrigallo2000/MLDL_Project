@@ -193,7 +193,7 @@ class Client:
           #regL2R_avg = total_regL2R / total_samples
           #regCMI_avg = total_regCMI / total_samples
           #regNegEnt_avg = total_regNegEnt / total_samples
-          acc=correct/total_samples
+          acc=(correct/total_samples)*100
 
           return 'roba', loss_avg, acc
         else:

@@ -597,11 +597,11 @@ class StyleRem:
         return img_without_style
     
 class AddUniformNoise:
-    def _init_(self, low, high):
+    def __init__(self, low, high):
         self.low = low
         self.high = high
 
-    def _call_(self, pic):
+    def __call__(self, pic):
         noise = np.random.uniform(self.low, self.high, size=pic.shape)
         noisy_pic = np.clip(pic + noise, 0, 255).astype(np.uint8)
         return noisy_pic

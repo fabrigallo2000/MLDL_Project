@@ -66,14 +66,26 @@ def get_transforms(args):
             sstr.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ])
     elif args.model == 'cnn' or args.model == 'resnet18':
-        train_transforms = nptr.Compose([
-            nptr.ToTensor(),
-            nptr.Normalize((0.5,), (0.5,)),
-        ])
-        test_transforms = nptr.Compose([
-            nptr.ToTensor(),
-            nptr.Normalize((0.5,), (0.5,)), 
-        ])
+        if args.noise:
+            train_transforms = nptr.Compose([
+                nptr.AddUniformNoise(0, 0.8),
+                nptr.ToTensor(),
+                nptr.Normalize((0.5,), (0.5,)),
+            ])
+            test_transforms = nptr.Compose([
+                nptr.AddUniformNoise(0, 0.8),
+                nptr.ToTensor(),
+                nptr.Normalize((0.5,), (0.5,)), 
+            ])
+        else:
+            train_transforms = nptr.Compose([
+                nptr.ToTensor(),
+                nptr.Normalize((0.5,), (0.5,)),
+            ])
+            test_transforms = nptr.Compose([
+                nptr.ToTensor(),
+                nptr.Normalize((0.5,), (0.5,)), 
+            ])
         
 
 

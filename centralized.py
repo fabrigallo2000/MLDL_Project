@@ -2,47 +2,28 @@ import torch
 import torchvision
 import torch.utils.data as tdata
 from torchvision import transforms, datasets
-from torchvision.transforms import Normalize, ToTensor, functional
+from torchvision.transforms import Normalize, ToTensor
 import torch.nn as nn  # neural network
 import torch.optim as optim  # optimization layer
 import torch.nn.functional as F  # activation functions
 import matplotlib.pyplot as plt
 import argparse
 import time
-import datasets.np_transforms as nptr
-import pandas as pd
-import numpy as np
 from collections import OrderedDict
 from models.YourCNN import YourCNN
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # use gpu if available
 
 # load data in
-emnist_dataset = datasets.EMNIST(root="/content/MLDL_Project/data", split="balanced",
-                            train=True, transform=transforms.ToTensor(),
+train_set = datasets.EMNIST(root="/content/MLDL_Project/data", split="balanced",
+                            train=True, transform=transforms.Compose([ToTensor()]),
                            download=True
                            )
-# split train and validation
-train_size = int(0.8 * len(emnist_dataset))
-valid_size = int(0.2 * len(emnist_dataset))
-
-train_set, val_set = tdata.random_split(emnist_dataset, [train_size, valid_size])
-
-# divide il test_set in 5 sezioni uguali e ne ruota ogniuna di uno degli angoli
-angles = [0, 15, 30, 45, 75]
-train_parts  = []
-part_size = int(train_size/5)
-for i in range(5):
-  start = part_size * i
-  finish = part_size * (i+1)
-  indices = list(range(start, finish))
-  part = torch.utils.data.Subset(train_set, indices)
-  part.dataset.transform = transforms.Compose([transforms.ToTensor(),
-        nptr.Rotate(angles[i])
-    ])
-  train_parts.append(part)
-# ricompone il train set con le parti ruotate
-train_set = tdata.ConcatDataset(train_parts)
+test_set = datasets.EMNIST(root="/content/MLDL_Project/data", split="balanced", 
+                           train=False,transform=transforms.Compose([ToTensor()]),
+                           download=True
+                          )
+entire_trainset = torch.utils.data.DataLoader(train_set, shuffle=True)
 
 # ruota validation set dell'angolo lasciato fuori da train
 val_set.dataset.transform = transforms.Compose([transforms.ToTensor(),

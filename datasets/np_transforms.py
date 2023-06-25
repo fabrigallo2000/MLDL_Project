@@ -595,3 +595,13 @@ class StyleRem:
         img_spectrum[..., top:bottom, left:right] = 0
         img_without_style = torch.fft.ifft2(torch.fft.ifftshift(img_spectrum), dim=(-2, -1)).real
         return img_without_style
+    
+class AddUniformNoise:
+    def _init_(self, low, high):
+        self.low = low
+        self.high = high
+
+    def _call_(self, pic):
+        noise = np.random.uniform(self.low, self.high, size=pic.shape)
+        noisy_pic = np.clip(pic + noise, 0, 255).astype(np.uint8)
+        return noisy_pic

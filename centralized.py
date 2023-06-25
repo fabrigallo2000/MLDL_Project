@@ -1,24 +1,25 @@
 import torch
 import torchvision
 from torchvision import transforms, datasets
-from torchvision.transforms import Normalize, ToTensor
+from torchvision.transforms import Normalize, ToTensor , functional
 import torch.nn as nn  # neural network
 import torch.optim as optim  # optimization layer
 import torch.nn.functional as F  # activation functions
 import matplotlib.pyplot as plt
 import argparse
 import time
+import numpy as np
 from collections import OrderedDict
 from models.YourCNN import YourCNN
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # use gpu if available
 
 # load data in
 train_set = datasets.EMNIST(root="/content/MLDL_Project/data", split="balanced",
-                            train=True, transform=transforms.Compose([ToTensor()]),
+                            train=True, transform=transforms.Compose([ToTensor(),functional.rotate(np.random.choice([0, 15, 30, 45, 75]))]),
                            download=True
                            )
 test_set = datasets.EMNIST(root="/content/MLDL_Project/data", split="balanced", 
-                           train=False,transform=transforms.Compose([ToTensor()]),
+                           train=False,transform=transforms.Compose([ToTensor(),functional.rotate(np.random.choice([60]))]),
                            download=True
                           )
 entire_trainset = torch.utils.data.DataLoader(train_set, shuffle=True)

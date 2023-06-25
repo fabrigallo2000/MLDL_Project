@@ -221,7 +221,11 @@ class Server:
                     
                     if self.args.fedSR:
                       z, (z_mu, z_sigma) = featurize(self.net,inputs,self.args.z_dim) #passare tutto il modello a featurize, non solo il net
-                      outputs = self.cls(z)
+                      preds = torch.softmax(self.cls(z),dim=1)
+                      preds = preds.view([self.num_samples,-1,self.num_classes]).mean(0)
+                      outputs=torch.log(preds) #ho corretto il problema potenziale del FedSR
+
+                      #outputs = self.cls(z)
                     else:
                       outputs = self.model(inputs)
 

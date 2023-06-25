@@ -1,40 +1,56 @@
 import torch
 import torchvision
+import torch.utils.data as tdata
 from torchvision import transforms, datasets
-from torchvision.transforms import Normalize, ToTensor
+from torchvision.transforms import Normalize, ToTensor, functional
 import torch.nn as nn  # neural network
 import torch.optim as optim  # optimization layer
 import torch.nn.functional as F  # activation functions
 import matplotlib.pyplot as plt
 import argparse
 import time
+import datasets.np_transforms as nptr
+import pandas as pd
+import numpy as np
 from collections import OrderedDict
 from models.YourCNN import YourCNN
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # use gpu if available
 
 # load data in
-train_set = datasets.EMNIST(root="/content/MLDL_Project/data", split="balanced",
-                            train=True, transform=transforms.Compose([ToTensor()]),
+emnist_dataset = datasets.EMNIST(root="/content/MLDL_Project/data", split="balanced",
+                            train=True, transform=transforms.ToTensor(),
                            download=True
                            )
-test_set = datasets.EMNIST(root="/content/MLDL_Project/data", split="balanced", 
-                           train=False,transform=transforms.Compose([ToTensor()]),
-                           download=True
-                          )
-entire_trainset = torch.utils.data.DataLoader(train_set, shuffle=True)
+# split train and validation
+train_size = int(0.8 * len(emnist_dataset))
+valid_size = int(0.2 * len(emnist_dataset))
 
-split_train_size = int(0.8*(len(entire_trainset)))  # use 80% as train set
-split_valid_size = len(entire_trainset) - split_train_size  # use 20% as validation set
+train_set, val_set = tdata.random_split(emnist_dataset, [train_size, valid_size])
 
-train_set, val_set = torch.utils.data.random_split(train_set, [split_train_size, split_valid_size]) 
+# divide il test_set in 5 sezioni uguali e ne ruota ogniuna di uno degli angoli
+angles = [0, 15, 30, 45, 75]
+train_parts  = []
+part_size = int(train_size/5)
+for i in range(5):
+  start = part_size * i
+  finish = part_size * (i+1)
+  indices = list(range(start, finish))
+  part = torch.utils.data.Subset(train_set, indices)
+  part.dataset.transform = transforms.Compose([transforms.ToTensor(),
+        nptr.Rotate(angles[i])
+    ])
+  train_parts.append(part)
+# ricompone il train set con le parti ruotate
+train_set = tdata.ConcatDataset(train_parts)
 
-print(f'train set size: {split_train_size}, validation set size: {split_valid_size}')
-model_codes = {
-    'model_1': [64, 'M', 128, 'M', 'D', 256, 'M', 512, 'M', 'D'],
-    'model_2': [64, 'M', 128, 'M', 'D', 256, 256, 'M', 512, 512, 'M', 'D'],
-    'model_3': [64, 64, 'M', 128, 128, 'M', 'D', 256, 256, 256, 'M', 512, 512, 512, 'M', 'D'],
-    'model_4': [64, 64, 64, 64, 'M', 128, 128, 128, 128, 'M', 'D', 256, 256, 256, 256, 'M', 512, 512, 512, 512, 'M', 'D']
-}
+# ruota validation set dell'angolo lasciato fuori da train
+val_set.dataset.transform = transforms.Compose([transforms.ToTensor(),
+        nptr.Rotate(60)
+    ])
+
+print(f'train set size: {train_size}, validation set size: {valid_size}')
+
 def train(net, optimizer, criterion, args):
     '''
     Returns validation loss and accuracy
@@ -50,7 +66,7 @@ def train(net, optimizer, criterion, args):
             train_loss (float): train loss
             train_acc (float): train accuracy
     '''
-    train_loader = torch.utils.data.DataLoader(train_set, batch_size=args.train_batch, shuffle=True)
+    train_loader = tdata.DataLoader(train_set, batch_size=args.train_batch, shuffle=True)
     
     net.train()
     
@@ -131,7 +147,7 @@ def test(net, args):
         Returns:
             test_acc (float): test accuracy of a trained model
     '''
-    test_loader = torch.utils.data.DataLoader(test_set, batch_size=args.test_batch, shuffle=True)
+    test_loader = torch.utils.data.DataLoader(val_set, batch_size=args.test_batch, shuffle=True)
 
     net.eval()
     
@@ -177,7 +193,8 @@ def main(args):
     train_accs = []
     val_accs = []
     time_total = 0
-        
+    df_accuracy = pd.DataFrame(columns=['x_round', 'y'])
+
     for epoch in range(args.epoch):  # number of training to be completed
         time_start = time.time()
         net, train_loss, train_acc = train(net, optimizer, criterion, args)
@@ -192,11 +209,15 @@ def main(args):
         time_duration = round(time_end - time_start, 2)
         time_total += time_duration
         
+        # dataframe update
+        df_accuracy.loc[len(df_accuracy)] = [epoch+1, val_accs]
+
         # print results of each iteration
         print(f'Epoch {epoch+1}, Accuracy(train, validation):{round(train_acc, 2), round(val_acc, 2)}, '
               f'Loss(train, validation):{round(train_loss, 4), round(val_loss, 4)}, Time: {time_duration}s')
-
-    test_acc = test(net, args)
+    
+    df_accuracy.to_csv('centralized_Rotete_LOO.csv')
+    #test_acc = test(net, args)
 
     results = OrderedDict()
     results['train_losses'] = [round(x, 4) for x in train_losses]
@@ -205,7 +226,7 @@ def main(args):
     results['val_accs'] = [round(x, 2) for x in val_accs]
     results['train_acc'] = round(train_acc, 2)
     results['val_acc'] = round(val_acc, 2)
-    results['test_acc'] = round(test_acc, 2)
+    #results['test_acc'] = round(test_acc, 2)
     results['time_total'] = round(time_total, 2)
     print(results['test_acc'])
     

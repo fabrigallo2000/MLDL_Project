@@ -1,5 +1,4 @@
 import numpy as np
-import datasets.np_transforms as tr
 
 from typing import Any
 from torch.utils.data import Dataset
@@ -16,7 +15,7 @@ IMAGE_SIZE = 28
 
 class Femnist(Dataset):
 
-    def __init__(self, data: dict,transform: tr.Compose,client_name: str, angle,Spectre=False,ls=None):
+    def __init__(self, data: dict,transform: nptr.Compose,client_name: str, angle,Spectre=False,ls=None):
         super().__init__()
         self.samples = [(image, label) for image, label in zip(data['x'], data['y'])]
         # self.samples è lista di tuple [([pixel immagine], label), ()]

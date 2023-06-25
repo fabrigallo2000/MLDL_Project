@@ -53,9 +53,9 @@ def model_init(args):
     raise NotImplementedError
 
 
-def get_transforms(args,angle=0):
+def get_transforms(args):
     # TODO: test your data augmentation by changing the transforms here!
-    if args.model == 'deeplabv3_mobilenetv2' and angle == 0:
+    if args.model == 'deeplabv3_mobilenetv2':
         train_transforms = sstr.Compose([
             sstr.RandomResizedCrop((512, 928), scale=(0.5, 2.0)),
             sstr.ToTensor(),
@@ -65,7 +65,7 @@ def get_transforms(args,angle=0):
             sstr.ToTensor(),
             sstr.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ])
-    elif args.model == 'cnn' or args.model == 'resnet18' and angle == 0:
+    elif args.model == 'cnn' or args.model == 'resnet18':
         train_transforms = nptr.Compose([
             nptr.ToTensor(),
             nptr.Normalize((0.5,), (0.5,)),
@@ -142,7 +142,7 @@ def get_datasets(args):
                 angle = np.random.choice(angles)
             if args.SPEC:
                 Spectre=True
-                ls=10 # da provare per fare hyperparameter tuning
+                ls=0 # 0 is the best performing
             train_datasets.append(Femnist(data, train_transforms, user, angle,Spectre,ls))
         for user, data in test_data.items():
             if args.loo and args.rotate:
@@ -152,7 +152,7 @@ def get_datasets(args):
                 angle = np.random.choice(angles)
             if args.SPEC:
                 Spectre=True
-                ls= 10 # da provare per fare hyperparameter tuning
+                ls= 0 # 0 is the best performing
             test_datasets.append(Femnist(data, test_transforms, user, angle,Spectre,ls))
 
     else:
@@ -179,14 +179,10 @@ def set_metrics(args):
     return metrics
 
 
-def gen_clients(args, train_datasets, test_datasets, model,rotate=True, cls=None, net_model=None): # impostare o meno la rotazione qui
+def gen_clients(args, train_datasets, test_datasets, model, cls=None, net_model=None): # impostare o meno la rotazione qui
     clients = [[], []]
     for i, datasets in enumerate([train_datasets, test_datasets]):
-        angle=0
         for ds in datasets:
-            if rotate:
-                angles = [0, 15, 30, 45, 60, 75]
-                angle = np.random.choice(angles)
             clients[i].append(Client(args, ds, model, cls, net_model, test_client=i == 1)) # qua,se si decide di ruotare l'angolo avviene in modo casuale
     return clients[0], clients[1]
 

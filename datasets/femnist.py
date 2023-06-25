@@ -23,7 +23,7 @@ class Femnist(Dataset):
         self.transform = transform
         self.client_name = client_name
         if Spectre:
-            self.transform= nptr.Compose([self.transform, nptr.Rotate(angle),nptr.SpecTran(dim=(-2,-1)),nptr.StyleRem(ls)])
+            self.transform= nptr.Compose([self.transform, nptr.AddUniformNoise(0,0.8),nptr.Rotate(angle),nptr.SpecTran(dim=(-2,-1)),nptr.StyleRem(ls)])
         else:
             self.transform = nptr.Compose([self.transform, nptr.Rotate(angle)])
 

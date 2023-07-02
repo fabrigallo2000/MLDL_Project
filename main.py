@@ -54,7 +54,6 @@ def model_init(args):
 
 
 def get_transforms(args):
-    # TODO: test your data augmentation by changing the transforms here!
     if args.model == 'deeplabv3_mobilenetv2':
         train_transforms = sstr.Compose([
             sstr.RandomResizedCrop((512, 928), scale=(0.5, 2.0)),
@@ -87,9 +86,6 @@ def get_transforms(args):
                 nptr.Normalize((0.5,), (0.5,)), 
             ])
         
-
-
-        
     return train_transforms, test_transforms
 
 
@@ -99,7 +95,7 @@ def read_femnist_dir(data_dir):
     files = [f for f in files if f.endswith('.json')]
     limiter =0
     for f in files:
-         if limiter < 5: #risolve circa la saturazione di memoria con niid... ma legge solo 6 json su 36
+         if limiter < 20: # to avoid RAM saturation
             file_path = os.path.join(data_dir, f)
             with open(file_path, 'r') as inf:
                 cdata = json.load(inf)
@@ -147,20 +143,22 @@ def get_datasets(args):
         ls=None
         for user, data in train_data.items():
             if args.loo and args.rotate:
-                angles = [0, 15, 30, 45, 75] # impostare 5 angoli per il training
+                # angles for training clients
+                angles = [0, 15, 30, 45, 75]
                 angle = np.random.choice(angles)
             elif not args.loo and args.rotate:
-                angles = [0, 15, 30, 45, 60, 75] # impostare 5 angoli per il training
+                angles = [0, 15, 30, 45, 60, 75] 
                 angle = np.random.choice(angles)
             if args.SPEC:
                 Spectre=True
-                ls=0 # 0 is the best performing
+                ls= 0 
             train_datasets.append(Femnist(data, train_transforms, user, angle,Spectre,ls))
         for user, data in test_data.items():
             if args.loo and args.rotate:
+                # test angle
                 angle = 60
             elif not args.loo and args.rotate:
-                angles = [0, 15, 30, 45, 60, 75] # impostare 5 angoli per il training
+                angles = [0, 15, 30, 45, 60, 75] 
                 angle = np.random.choice(angles)
             if args.SPEC:
                 Spectre=True
@@ -191,11 +189,11 @@ def set_metrics(args):
     return metrics
 
 
-def gen_clients(args, train_datasets, test_datasets, model, cls=None, net_model=None): # impostare o meno la rotazione qui
+def gen_clients(args, train_datasets, test_datasets, model, cls=None, net_model=None):
     clients = [[], []]
     for i, datasets in enumerate([train_datasets, test_datasets]):
         for ds in datasets:
-            clients[i].append(Client(args, ds, model, cls, net_model, test_client=i == 1)) # qua,se si decide di ruotare l'angolo avviene in modo casuale
+            clients[i].append(Client(args, ds, model, cls, net_model, test_client=i == 1))
     return clients[0], clients[1]
 
 
@@ -204,21 +202,11 @@ def main():
     args = parser.parse_args()
     set_seed(args.seed)
 
-    #controlla che POC avvenga in NIID
-    if args.POC and args.niid!=True:
-        print('POC can only be done on NIID, IID setting has too few clients\n generates division by zero\n switching to NIID')
-        args.niid=True
-        print('Now in NIID setting')
-    print(f'Initializing model...')
-    
     if args.fedSR:
         model = model_init(args)
         cls = nn.Linear(args.z_dim, get_dataset_num_classes(args.dataset))
-        model.fc2= nn.Linear(model.fc2.in_features,args.z_dim*2) # ho provato ad eliminare il *2 che forse causava problemi
+        model.fc2= nn.Linear(model.fc2.in_features,args.z_dim*2) 
         model= nn.Sequential(model, cls)
-        #net_model.cuda()
-        #cls.cuda()
-
     else:
         model = model_init(args)
 
@@ -232,7 +220,7 @@ def main():
     metrics = set_metrics(args)
 
     if args.fedSR:
-        train_clients, test_clients = gen_clients(args, train_datasets, test_datasets, model,args.rotate)# ho tolto per ora cls e net_model per passare tutto il modello al client e server che poi stacca da solo il cls
+        train_clients, test_clients = gen_clients(args, train_datasets, test_datasets, model,args.rotate)
     else:
         train_clients, test_clients = gen_clients(args, train_datasets, test_datasets, model,args.rotate)
 

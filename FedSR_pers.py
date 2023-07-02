@@ -11,7 +11,7 @@ def featurize(model, x, probabilistic=True, z_dim=512):
         return model(x)
     else:
         z_params = model(x)
-        z_mu = z_params[:, :z_dim] #anche qua è il punto cruciale
+        z_mu = z_params[:, :z_dim]
         z_sigma = F.softplus(z_params[:, z_dim:])
         z_dist = dist.Independent(dist.Normal(z_mu, z_sigma), 1)
         z = z_dist.rsample([1]).view([-1, z_dim])
@@ -34,7 +34,6 @@ def compute_loss(model,criterion, optim, dataset,device,lr=0.001, num_classes=62
     total_samples = 0
     correct=0
     
-    #dataloader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
     r_mu = nn.Parameter(torch.zeros(num_classes,z_dim))
     r_sigma = nn.Parameter(torch.ones(num_classes,z_dim))
     C = nn.Parameter(torch.ones([]))
@@ -46,8 +45,7 @@ def compute_loss(model,criterion, optim, dataset,device,lr=0.001, num_classes=62
         z, (z_mu, z_sigma) = model.featurize(x, return_dist=True)
         logits = cls(z)
         
-        loss = criterion(logits, y) #qua è il punto cruciale
-
+        loss = criterion(logits, y)
         obj = loss
         regL2R = torch.zeros_like(obj)
         regCMI = torch.zeros_like(obj)

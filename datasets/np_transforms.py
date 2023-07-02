@@ -12,7 +12,7 @@ try:
 except ImportError:
     accimage = None
 import numbers
-from scipy import misc, ndimage
+from scipy import ndimage
 import collections
 from torchvision import transforms
 from skimage.transform import resize
@@ -459,13 +459,6 @@ class rgb2xyz(object):
 
             return np.dot(arr, self.matrix.T.copy())
 
-            # out_img = np.zeros(pic.shape)
-            #
-            # for row in range(pic.shape[0]):
-            #     for col in range(pic.shape[1]):
-            #         out_img[row, col] = np.dot(self.matrix, pic[row, col])
-            #
-            # return out_img
         else:
             raise TypeError("Tensor [pic] is not numpy array")
 
@@ -476,9 +469,6 @@ class xyz2rgb(object):
 
     def __call__(self, pic):
         if isinstance(pic, np.ndarray):
-            # from skimage import color
-            # return color.rgb2lab(pic, self.illuminant, self.observer)
-
             arr = np.asanyarray(pic)
 
             if arr.ndim not in [3, 4] or arr.shape[-1] != 3:
@@ -487,14 +477,6 @@ class xyz2rgb(object):
                 raise ValueError(msg)
 
             return np.dot(arr, self.matrix.T.copy())
-
-            # out_img = np.zeros(pic.shape)
-            #
-            # for row in range(pic.shape[0]):
-            #     for col in range(pic.shape[1]):
-            #         out_img[row, col] = np.dot(self.matrix, pic[row, col])
-            #
-            # return out_img
         else:
             raise TypeError("Tensor [pic] is not numpy array")
 

@@ -27,7 +27,7 @@ def get_parser():
     parser.add_argument('--POC', action='store_true', default=False)
     parser.add_argument('--SPEC',action='store_true',default=False)
     parser.add_argument('--noise',action='store_true',default=False)
-    parser.add_argument('--eval',action='store_false',default=True)
+    parser.add_argument('--eval',action='store_false',default=False)
 
 
     

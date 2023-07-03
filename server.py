@@ -23,7 +23,7 @@ class Server:
         for c in train_clients:
           self.clients_loss[c] = 4
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        
+        self.num_classes=62
 
     def select_clients(self):
         num_clients = min(self.args.clients_per_round, len(self.train_clients))
@@ -174,7 +174,7 @@ class Server:
                     if self.args.fedSR:
                       z, (z_mu, z_sigma) = featurize(self.net,inputs,self.args.z_dim) 
                       preds = torch.softmax(self.cls(z),dim=1)
-                      preds = preds.view([self.num_samples,-1,self.num_classes]).mean(0)
+                      preds = preds.view([inputs.shape[0],-1,self.num_classes]).mean(0)
                       outputs=torch.log(preds)
 
                     else:

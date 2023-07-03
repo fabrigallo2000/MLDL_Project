@@ -151,7 +151,7 @@ def get_datasets(args):
                 angle = np.random.choice(angles)
             if args.SPEC:
                 Spectre=True
-                ls= 0 
+                ls= 5 
             train_datasets.append(Femnist(data, train_transforms, user, angle,Spectre,ls))
         for user, data in test_data.items():
             if args.loo and args.rotate:
@@ -162,7 +162,7 @@ def get_datasets(args):
                 angle = np.random.choice(angles)
             if args.SPEC:
                 Spectre=True
-                ls= 0 # 0 is the best performing
+                ls= 5 
             test_datasets.append(Femnist(data, test_transforms, user, angle,Spectre,ls))
 
     else:
